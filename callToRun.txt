@@ -1,1 +1,1 @@
-Command to run binary executable: mpirun --map-by ppr:1:node --mca mpi_leave_pinned 1 --mca btl_openib_allow_ib 1 --mca btl openib,self,vader taskset -c 0-15 ./binary_name
+Command to run binary executables: mpirun --map-by ppr:1:node --mca mpi_leave_pinned 1 --mca btl_openib_allow_ib 1 --mca btl openib,self,vader taskset -c 0-15 ./binary_name
