@@ -65,6 +65,13 @@ class TATP_DB{
 		unsigned long get_random_vlr(int thread_id);
 
 		void print_results();
+
+		//Start: Functions meant for debugging and verification purposes.
+		void printTotalSubscribers();
+		void printdbTable();
+		void printAI_table();
+		void printSF_table();
+		//End: Functions meant for debugging and verification purposes.
 };
 
 //DS for logging info to recover from a failed update_subscriber_data Tx

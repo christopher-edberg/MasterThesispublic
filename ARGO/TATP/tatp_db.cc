@@ -16,6 +16,9 @@ This file defines the various transactions in TATP.
 extern int workrank;
 extern int numtasks;
 
+
+
+
 int getRand() {
 	return rand();
 }
@@ -31,6 +34,64 @@ void distribute(int& beg,
 }
 
 TATP_DB::TATP_DB(unsigned num_subscribers) {}
+
+//#changed
+//Start: Functions meant for debugging and verification purposes.
+
+//Subscriber entries
+void TATP_DB::printTotalSubscribers() { printf("%lu printing subs\n",total_subscribers); }
+void TATP_DB::printdbTable() {
+	for(int i = 0; i<total_subscribers; i++ ) {
+		//printf("Printing subscriber id of element %d:%u\n",i, subscriber_table[i].s_id); //Will be the same as index, printing not necessary.
+		printf("Printing vlr_location of element %d:%u\n",i, subscriber_table[i].vlr_location);
+		printf("Printing subscriber number of entry %d:", i);
+		for (int j=0; j<15; j++) {
+			printf("%d",subscriber_table[i].sub_nbr[j]);//Is never set to printing is not necessary.
+		}
+		printf("\n");
+		//Padding not specified
+		/*printf("\n Printing padding of element %d:",i);
+		for (int k=0; k<5; k++) {
+			printf("%c", subscriber_table[i].padding[k]);
+		}
+		printf("\n"); */
+	}
+}
+
+//access_info_table
+void TATP_DB::printAI_table() {
+	for(int i=0; i<total_subscribers; i++) {
+		printf("Printing ai_type for element %d: %d\n", i, access_info_table[i].ai_type);
+	}
+}
+
+
+//special_facility_table
+void TATP_DB::printSF_table() {
+	for(int i=0; i<4*total_subscribers; i++) {
+		if(special_facility_table[i].valid==1) {
+			printf("Printing s_id for element %d: %d\n", i, special_facility_table[i].s_id);
+			printf("Printing sf_type for element %d: %d\n", i, special_facility_table[i].sf_type);
+			printf("Printing is_active for element %d: %d\n",i,  special_facility_table[i].is_active);
+			printf("Printing error_cntrl for element %d: %d\n",i,  special_facility_table[i].error_cntrl);
+			printf("Printing data_a for element %d: %d\n",i,  special_facility_table[i].data_a);
+			printf("Printing data_b for element %d: ", i);
+			for (int j=0; j<5; j++) {
+				printf("%c",special_facility_table[i].data_b[j]);//Is never set to printing is not necessary.
+			}
+			printf("\n");
+			printf("Printing valid for element %d: %d\n",i, special_facility_table[i].valid);
+			printf("\n");
+		}
+	}
+}
+
+
+
+//End: Functions meant for debugging and verification purposes.
+
+
+
 
 void TATP_DB::initialize(unsigned num_subscribers, int n) {
 	total_subscribers = num_subscribers;
@@ -293,11 +354,13 @@ unsigned long TATP_DB::get_random(int thread_id, int min, int max) {
 unsigned long TATP_DB::get_random_s_id(int thread_id) {
 	unsigned long tmp;
 	tmp = subscriber_rndm_seeds[thread_id*10] = (subscriber_rndm_seeds[thread_id*10] * 16807) % 2147483647;
+	//printf("%lu\n", (1 + tmp%(total_subscribers))); //#changed
 	return (1 + tmp%(total_subscribers));
 }
 
 unsigned long TATP_DB::get_random_vlr(int thread_id) {
 	unsigned long tmp;
 	tmp = vlr_rndm_seeds[thread_id*10] = (vlr_rndm_seeds[thread_id*10] * 16807)%2147483647;
+	//printf("%lu\n", (1 + tmp%(2^32))); //#changed
 	return (1 + tmp%(2^32));
 }
