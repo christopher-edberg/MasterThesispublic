@@ -19,10 +19,12 @@ the database.
 
 #define NUM_SUBSCRIBERS 10000
 #define NUM_OPS_PER_CS 2
-#define NUM_OPS 10000
+#define NUM_OPS 10000 //For verification NUM_OPS has to be devisible by NUM_THREADS*numtasks.numtasks i.e. number of nodes.
 #define NUM_THREADS 4
 
 #define NUM_RNDM_SEEDS 1280
+
+#define ENABLE_VERIFICATION 0 //Variable for verification purposes.
 
 class TATP_DB{
 	private:
@@ -71,6 +73,8 @@ class TATP_DB{
 		void printdbTable();
 		void printAI_table();
 		void printSF_table();
+		void verify();
+		void write_to_file();
 		//End: Functions meant for debugging and verification purposes.
 };
 

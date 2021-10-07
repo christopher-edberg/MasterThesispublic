@@ -68,8 +68,9 @@ int main(int argc, char* argv[]) {
 	pthread_t threads[NUM_THREADS];
 	int global_tid[NUM_THREADS];
 	//my_tatp_db->printdbTable(); //#changed
-	my_tatp_db->printSF_table();
+	//my_tatp_db->printSF_table();
 	gettimeofday(&tv_start, NULL);
+
 	for(int i=0; i<NUM_THREADS; i++) {
 		global_tid[i] = workrank*NUM_THREADS + i;
 		pthread_create(&threads[i], NULL, update_locations, (void*)(global_tid+i));
@@ -80,15 +81,17 @@ int main(int argc, char* argv[]) {
 	argo::barrier();
 	gettimeofday(&tv_end, NULL);
 
+	#if ENABLE_VERIFICATION == 1
+		WEXEC(my_tatp_db->verify());
+	#endif
+
 	WEXEC(fprintf(stderr, "time elapsed %ld us\n",
 				tv_end.tv_usec - tv_start.tv_usec +
 				(tv_end.tv_sec - tv_start.tv_sec) * 1000000));
 	WEXEC(fexec << "TATP" << ", " << std::to_string((tv_end.tv_usec - tv_start.tv_usec) + (tv_end.tv_sec - tv_start.tv_sec) * 1000000) << std::endl);
 	WEXEC(fexec.close());
-	my_tatp_db->printTotalSubscribers();
-	//my_tatp_db->printdbTable(); // #changed
-	//my_tatp_db->printAI_table();
-	//my_tatp_db->printSF_table();
+
+	WEXEC(my_tatp_db->write_to_file());
 	delete my_tatp_db;
 
 	WEXEC(std::cout<<"Done with threads"<<std::endl);

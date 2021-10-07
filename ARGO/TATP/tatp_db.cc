@@ -57,6 +57,36 @@ void TATP_DB::printdbTable() {
 		printf("\n"); */
 	}
 }
+void TATP_DB::write_to_file()
+{
+	int i, rv,rv2;
+	FILE *file;
+	char *outputFile = (char*)"out.txt";
+
+	file = fopen(outputFile, "w");
+	if(file == NULL) {
+		printf("ERROR: Unable to open file `%s'.\n", outputFile);
+		exit(1);
+	}
+	for(int i = 0; i<total_subscribers; i++ ) {
+		rv = fprintf(file,"Printing vlr_location of element %d:%u Subscriber number:", i, subscriber_table[i].vlr_location);
+		for (int j=0; j<15; j++) {
+			rv2 = fprintf(file,"%d",subscriber_table[i].sub_nbr[j]);//Is never set to printing is not necessary.
+		}
+		fprintf(file,"\n");
+
+		if(rv < 0 || rv2<0) {
+			printf("ERROR: Unable to write to file `%s'.\n", outputFile);
+			fclose(file);
+			exit(1);
+		}
+	}
+	rv = fclose(file);
+	if(rv != 0) {
+		printf("ERROR: Unable to close file `%s'.\n", outputFile);
+		exit(1);
+	}
+}
 
 //access_info_table
 void TATP_DB::printAI_table() {
@@ -211,7 +241,12 @@ void TATP_DB::fill_subscriber_entry(unsigned _s_id) {
 	subscriber_table[_s_id].byte2_10 = (short) (getRand()%256);
 
 	subscriber_table[_s_id].msc_location = getRand()%(2^32 - 1) + 1;
-	subscriber_table[_s_id].vlr_location = getRand()%(2^32 - 1) + 1;
+	#if ENABLE_VERIFICATION == 1
+		subscriber_table[_s_id].vlr_location = 0; //#changed for verification purposes. #Verification
+	#else
+		subscriber_table[_s_id].vlr_location = getRand()%(2^32 - 1) + 1;
+	#endif
+	//subscriber_table[_s_id].vlr_location = getRand()%(2^32 - 1) + 1;
 }
 
 void TATP_DB::fill_access_info_entry(unsigned _s_id, short _ai_type) {
@@ -312,11 +347,32 @@ void TATP_DB::update_location(int threadId, int num_ops) {
 	rndm_s_id = get_random_s_id(threadId)-1;
 	//rndm_s_id /=total_subscribers; // with this rndm_s_id is always 0
 	lock_[rndm_s_id]->lock();
-	subscriber_table[rndm_s_id].vlr_location = get_random_vlr(threadId);
+	#if ENABLE_VERIFICATION == 1
+		subscriber_table[rndm_s_id].vlr_location += 1; //#changed For verification purposes #verification
+	#else
+		subscriber_table[rndm_s_id].vlr_location = get_random_vlr(threadId);
+	#endif
 	lock_[rndm_s_id]->unlock();
 
 	return;
 }
+
+//For verification purposes #Verification #changed
+void TATP_DB::verify() {
+	long acc = 0;
+	for (long i = 0; i < total_subscribers; ++i)
+		acc += subscriber_table[i].vlr_location;
+
+	if (NUM_OPS == acc)
+		std::cout << "VERIFICATION: SUCCESS" << std::endl;
+	else
+		std::cout << "VERIFICATION: FAILURE" << std::endl;
+}
+//end of verification function
+
+
+
+
 
 void TATP_DB::insert_call_forwarding(int threadId) {
 	return;
@@ -354,13 +410,11 @@ unsigned long TATP_DB::get_random(int thread_id, int min, int max) {
 unsigned long TATP_DB::get_random_s_id(int thread_id) {
 	unsigned long tmp;
 	tmp = subscriber_rndm_seeds[thread_id*10] = (subscriber_rndm_seeds[thread_id*10] * 16807) % 2147483647;
-	//printf("%lu\n", (1 + tmp%(total_subscribers))); //#changed
 	return (1 + tmp%(total_subscribers));
 }
 
 unsigned long TATP_DB::get_random_vlr(int thread_id) {
 	unsigned long tmp;
 	tmp = vlr_rndm_seeds[thread_id*10] = (vlr_rndm_seeds[thread_id*10] * 16807)%2147483647;
-	//printf("%lu\n", (1 + tmp%(2^32))); //#changed
 	return (1 + tmp%(2^32));
 }
