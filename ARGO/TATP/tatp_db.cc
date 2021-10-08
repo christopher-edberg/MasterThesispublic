@@ -137,7 +137,7 @@ void TATP_DB::initialize(unsigned num_subscribers, int n) {
 	// A max of 3 call forwarding entries per "special facility entry"
 	call_forwarding_table= argo::conew_array<call_forwarding_entry>(3*4*num_subscribers);
 
-	lock_ = new argo::globallock::cohort_lock*[num_subscribers];
+	lock_ = new argo::globallock::cohort_lock*[num_subscribers]; //#todo lock created, change to non sync?
 	for(int i=0; i<num_subscribers; i++) {
 		lock_[i] = new argo::globallock::cohort_lock();
 	}
@@ -168,7 +168,7 @@ void TATP_DB::initialize(unsigned num_subscribers, int n) {
 }
 
 TATP_DB::~TATP_DB(){
-	for(int i=0; i<total_subscribers; i++) {
+	for(int i=0; i<total_subscribers; i++) { //#todo maybe change deconstructor for new locks?
 		delete lock_[i];
 	}
 	delete[] lock_;
@@ -346,7 +346,7 @@ void TATP_DB::update_location(int threadId, int num_ops) {
 	long rndm_s_id;
 	rndm_s_id = get_random_s_id(threadId)-1;
 	//rndm_s_id /=total_subscribers; // with this rndm_s_id is always 0
-	lock_[rndm_s_id]->lock();
+	lock_[rndm_s_id]->lock(); //#todo change locks to nonsynch
 	#if ENABLE_VERIFICATION == 1
 		subscriber_table[rndm_s_id].vlr_location += 1; //#changed For verification purposes #verification
 	#else
