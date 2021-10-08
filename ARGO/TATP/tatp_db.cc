@@ -363,7 +363,10 @@ void TATP_DB::verify() {
 	for (long i = 0; i < total_subscribers; ++i)
 		acc += subscriber_table[i].vlr_location;
 
-	if (NUM_OPS == acc)
+	long ops = NUM_THREADS*numtasks;
+	ops *= NUM_OPS/(NUM_THREADS*numtasks);
+
+	if (acc == ops)
 		std::cout << "VERIFICATION: SUCCESS" << std::endl;
 	else
 		std::cout << "VERIFICATION: FAILURE" << std::endl;
