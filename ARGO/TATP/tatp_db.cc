@@ -139,7 +139,7 @@ void TATP_DB::initialize(unsigned num_subscribers, int n) {
 
 	lock_ = new argo::globallock::cohort_lock*[num_subscribers]; //#todo lock created, change to non sync?
 	for(int i=0; i<num_subscribers; i++) {
-		lock_[i] = new argo::globallock::cohort_lock();
+		lock_[i] = new argo::globallock::cohort_lock(true); //#changed Changing to non sync locking.
 	}
 
 	int beg, end;
@@ -346,12 +346,14 @@ void TATP_DB::update_location(int threadId, int num_ops) {
 	long rndm_s_id;
 	rndm_s_id = get_random_s_id(threadId)-1;
 	//rndm_s_id /=total_subscribers; // with this rndm_s_id is always 0
-	lock_[rndm_s_id]->lock(); //#todo change locks to nonsynch
+	lock_[rndm_s_id]->lock(); //#changed changed locks to nonsynch and added specific acq/rel.
+	argo::backend::selective_acquire(&subscriber_table[rndm_s_id].vlr_location, sizeof(unsigned));
 	#if ENABLE_VERIFICATION == 1
 		subscriber_table[rndm_s_id].vlr_location += 1; //#changed For verification purposes #verification
 	#else
 		subscriber_table[rndm_s_id].vlr_location = get_random_vlr(threadId);
 	#endif
+	argo::backend::selective_release(&subscriber_table[rndm_s_id].vlr_location, sizeof(unsigned));
 	lock_[rndm_s_id]->unlock();
 
 	return;

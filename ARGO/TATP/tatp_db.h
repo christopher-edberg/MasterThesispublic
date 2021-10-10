@@ -24,7 +24,7 @@ the database.
 
 #define NUM_RNDM_SEEDS 1280
 
-#define ENABLE_VERIFICATION 0 //Variable for verification purposes.
+#define ENABLE_VERIFICATION 1 //Variable for verification purposes.
 
 class TATP_DB{
 	private:
