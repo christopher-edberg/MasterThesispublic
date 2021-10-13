@@ -23,8 +23,8 @@ This microbenchmark swaps two items in an array.
 
 #define NUM_SUB_ITEMS 64
 #define NUM_OPS 10000
-#define NUM_ROWS 100000
-#define NUM_THREADS 1
+#define NUM_ROWS 1000000
+#define NUM_THREADS 4
 
 #define ENABLE_VERIFICATION 1	//Enable/Disable verification functions.
 
@@ -59,11 +59,10 @@ struct Element {
 };
 
 struct Datum {
-argo::globallock::cohort_lock* lock_;
 	// pointer to the hashmap
 	Element* elements_;
 	// A lock which protects this Datum
-	//argo::globallock::cohort_lock* lock_;
+	argo::globallock::cohort_lock* lock_;
 };
 
 struct sps {
@@ -73,7 +72,7 @@ struct sps {
 };
 
 sps* S;
-
+int testing=0;
 void datum_init(sps* s) {
 	for(int i = 0; i < NUM_ROWS; i++) {
 		s->array[i].elements_ = argo::conew_<Element>();
@@ -117,9 +116,16 @@ bool swap(unsigned int index_a, unsigned int index_b) {
 	assert (index_a < NUM_ROWS && index_b < NUM_ROWS);
 
 	//exit if swapping the same index
-	if (index_a == index_b)
+	if (index_a == index_b) {
+		#if ENABLE_VERIFICATION == 1
+			S->array[index_a].lock_->lock();
+			argo::backend::selective_acquire(S->array[index_a].elements_, sizeof(Element));
+			S->array[index_a].elements_->verification = S->array[index_a].elements_->verification+ 2;
+			argo::backend::selective_release(S->array[index_a].elements_, sizeof(Element));
+			S->array[index_a].lock_->unlock();
+		#endif
 		return true;
-
+	}
 	//enforce index_a < index_b
 	if (index_a > index_b) {
 		int index_tmp = index_a;
@@ -127,48 +133,28 @@ bool swap(unsigned int index_a, unsigned int index_b) {
 		index_b = index_tmp;
 	}
 	//std::cout<<gettid()<<"Entering lock"<<std::endl;
-	S->array[index_a].lock_->lock();  //todo examine if locks can be changed.
+	S->array[index_a].lock_->lock();  //#changed Changed to selective acq/rel.
 	S->array[index_b].lock_->lock();
 
-	int* a = &S->array[index_a];
-	//std::cout<<gettid()<<"In lock"<<std::endl;
-//std::cout<<"sizeof :"<<sizeof(S->array[index_a])<<std::endl;
-std::cout<<"sizeof :"<<(&S->array[index_a])<<std::endl;
-	std::cout<<"lock is at: "<<&(S->array[index_a].lock_)<<std::endl;
-	//std::cout<<&S->array[index_a]<<std::endl;
-	std::cout<<"index"<<&(S->array[index_a].elements_)<<std::endl;
-	argo::backend::selective_acquire(&(S->array[index_a]).elements_, sizeof(Datum));
-	//argo::backend::selective_acquire(&(S->array[index_b]), sizeof(Datum));
-	//std::cout<<gettid()<<"Swapping values-0"<<std::endl;
-	//argo::backend::selective_acquire(&S->array[index_b].elements_->value_, 256);//sizeof(Element));
-	//argo::backend::selective_acquire(&S->array[index_b].elements_, 256);//sizeof(Element));
+	argo::backend::selective_acquire(S->array[index_a].elements_, sizeof(Element));//sizeof(Datum));
+	argo::backend::selective_acquire(S->array[index_b].elements_, sizeof(Element));
 
-	//std::cout<<gettid()<<"Swapping values"<<std::endl;
-/*
 	//swap array values
 	Element temp;
 	temp = *(S->array[index_a].elements_);
-	//std::cout<<gettid()<<"Swapping values1"<<std::endl;
 	*(S->array[index_a].elements_) = *(S->array[index_b].elements_);
-	//std::cout<<gettid()<<"Swapping values2"<<std::endl;
 	*(S->array[index_b].elements_) = temp;
-
-	//std::cout<<gettid()<<"Values swapped"<<std::endl;
 
 	#if ENABLE_VERIFICATION == 1
 		S->array[index_a].elements_->verification = S->array[index_a].elements_->verification+ 1;
+		S->array[index_b].elements_->verification = S->array[index_b].elements_->verification+ 1;
 	#endif
-*/
-//	argo::backend::selective_release(&S->array[index_a].elements_, 256);//sizeof(Element));
-	//argo::backend::selective_release(&S->array[index_b].elements_->value_, 256);//sizeof(Element));
 
-	//argo::backend::selective_release(&(S->array[index_a]), sizeof(Datum));
-	//argo::backend::selective_release(&(S->array[index_b]), sizeof(Datum));
-std::cout<<gettid()<<"before locks"<<std::endl;
+	argo::backend::selective_release(S->array[index_a].elements_, sizeof(Element));
+	argo::backend::selective_release(S->array[index_b].elements_, sizeof(Element));
+
 	S->array[index_a].lock_->unlock();
-	std::cout<<gettid()<<"between locks"<<std::endl;
 	S->array[index_b].lock_->unlock();
-std::cout<<gettid()<<"after locks"<<std::endl;
 	return true;
 }
 
@@ -190,8 +176,8 @@ void verify() {
 
 	long ops = NUM_THREADS*numtasks;
 	ops *= NUM_OPS/(NUM_THREADS*numtasks);
-
-	if (acc == ops)
+	
+	if (acc == 2*ops)
 		std::cout << "VERIFICATION: SUCCESS" << std::endl;
 	else
 		std::cout << "VERIFICATION: FAILURE" << std::endl;
@@ -230,17 +216,11 @@ int main(int argc, char** argv) {
 				(tv_end.tv_sec - tv_start.tv_sec) * 1000000));
 	WEXEC(fexec << "SPS" << ", " << std::to_string((tv_end.tv_usec - tv_start.tv_usec) + (tv_end.tv_sec - tv_start.tv_sec) * 1000000) << std::endl);
 	WEXEC(fexec.close());
-	//for (int i=0; i < NUM_ROWS; i++) { #todo remove
-		//std::cout<<*(S->array[99998].elements_)<<std::endl;
-		//std::cout<<(sizeof(S->array[0].elements_))<<std::endl;
-		//std::cout<<sizeof(S->array[0].verification)<<std::endl;
-		//std::cout<<sizeof(Datum().elements_)<<std::endl;
-		//std::cout<<sizeof()<<std::endl;
-	//}
-	#if ENABLE_VERIFICATION == 1
-		verify();
-	#endif
 
+
+	#if ENABLE_VERIFICATION == 1
+		WEXEC(verify());
+	#endif
 
 	datum_free(S);
 	delete[] S->array;

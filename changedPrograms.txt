@@ -1,2 +1,4 @@
+Functioning local versions:
 TATP (requires testing on ARGO servers)
-
+array_swap_cpp (requires testing on ARGO servers)
+Tested on ARGO:
