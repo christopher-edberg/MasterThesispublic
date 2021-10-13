@@ -1,0 +1,6 @@
+value_ int32_t array is 256
+Datum is 24 
+lock is 8
+verification int is 4
+elements_ is 8
+Element struct is 256
