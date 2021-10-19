@@ -19,13 +19,13 @@ This file declares the tpcc database and the accesor transactions.
 #include "simple_queue.h"
 
 #define NUM_ORDERS 10000
-#define NUM_THREADS 4 
+#define NUM_THREADS 4
 
 #define NUM_WAREHOUSES 1
 #define NUM_ITEMS 100
 #define NUM_LOCKS NUM_WAREHOUSES*10 + NUM_WAREHOUSES*NUM_ITEMS
 
-#define TPCC_DEBUG 0
+#define TPCC_DEBUG 1
 #define NUM_RNDM_SEEDS 1280
 
 // Macro for only node0 to do stuff
@@ -40,16 +40,16 @@ class TPCC_DB {
 		// Tables with size dependent on num warehouses
 		short num_warehouses;
 		short random_3000[3000];
-		warehouse_entry* warehouse; 
-		district_entry* district; 
-		customer_entry* customer; 
+		warehouse_entry* warehouse;
+		district_entry* district;
+		customer_entry* customer;
 		stock_entry* stock;
 
 		// Tables with slight variation in sizes (due to inserts/deletes etc.)
 		history_entry* history;
-		order_entry* order; 
-		new_order_entry* new_order; 
-		order_line_entry* order_line; 
+		order_entry* order;
+		new_order_entry* new_order;
+		order_line_entry* order_line;
 
 		// Fixed size table
 		item_entry* item;

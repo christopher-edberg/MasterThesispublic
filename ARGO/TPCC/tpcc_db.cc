@@ -16,9 +16,49 @@ This file defines the various functions of the tpcc database
 #include <queue>
 #include <algorithm>
 #include <iostream>
-
+#if TPCC_DEBUG == 1
+#include <sstream>
+#endif
 extern int workrank;
 extern int numtasks;
+
+
+
+
+
+// Printing function for verification
+void write_to_file(std::string string)
+{
+
+	int i, rv,rv2;
+	FILE *file;
+	char *outputFile;
+	//if (argo::node_id() == 0) {
+		outputFile = (char*)"out.txt";
+	/*}
+	else {
+		outputFile = (char*)"out2.txt";
+	}*/
+	file = fopen(outputFile, "a");
+	if(file == NULL) {
+		printf("ERROR: Unable to open file `%s'.\n", outputFile);
+		exit(1);
+	}
+	rv = fprintf(file,"%s",string.c_str());
+	if(rv < 0) {
+			printf("ERROR: Unable to write to file `%s'.\n", outputFile);
+			fclose(file);
+			exit(1);
+		}
+	rv = fclose(file);
+	if(rv != 0) {
+		printf("ERROR: Unable to close file `%s'.\n", outputFile);
+		exit(1);
+	}
+}
+
+//End of printing function
+
 
 void distribute(int& beg,
 		int& end,
@@ -48,14 +88,14 @@ void TPCC_DB::initialize(int _num_warehouses, int numThreads, int numLocks) {
 		random_3000[i] = random_3000[rand_loc];
 		random_3000[rand_loc] = temp;
 	}
-	
+
 	perTxLocks = new queue_t[numThreads];
 	for(int i=0; i<numThreads; i++) {
 		perTxLocks[i].push(0);
 		perTxLocks[i].pop();
 	}
 
-	locks = new argo::globallock::cohort_lock*[numLocks];
+	locks = new argo::globallock::cohort_lock*[numLocks]; //#todo change allocation to be non sync locks.
 	for(int i=0; i<numLocks; i++) {
 		locks[i] = new argo::globallock::cohort_lock();
 	}
@@ -79,7 +119,7 @@ void TPCC_DB::initialize(int _num_warehouses, int numThreads, int numLocks) {
 	order = argo::conew_array<order_entry>(num_orders);
 	new_order = argo::conew_array<new_order_entry>(num_new_orders);
 	order_line = argo::conew_array<order_line_entry>(num_order_lines);
-	
+
 	rndm_seeds = new unsigned long[NUM_RNDM_SEEDS];
 	for(int i=0; i<NUM_RNDM_SEEDS; i++) {
 		srand(i);
@@ -119,10 +159,10 @@ TPCC_DB::~TPCC_DB(){
 
 void TPCC_DB::populate_tables() {
 	WEXEC(std::cout<<"Populating item table"<<std::endl);
-	
+
 	int beg, end;
 	distribute(beg, end, NUM_ITEMS, 0, 0);
-	
+
 	for(int i=beg; i<end; i++) {
 		fill_item_entry(i+1);
 	}
@@ -151,7 +191,7 @@ void TPCC_DB::populate_tables() {
 	argo::barrier();
 }
 
-void TPCC_DB::acquire_locks(int threadId, queue_t &requestedLocks) {
+void TPCC_DB::acquire_locks(int threadId, queue_t &requestedLocks) { //#todo look into if relevant to argo non sync locking.
 	// Acquire locks in order.
 	int i = -1;
 	while(!requestedLocks.empty()) {
@@ -162,8 +202,7 @@ void TPCC_DB::acquire_locks(int threadId, queue_t &requestedLocks) {
 	}
 }
 
-void TPCC_DB::release_locks(int threadId) {
-
+void TPCC_DB::release_locks(int threadId) { //#todo look into if relevant to argo non sync locking.
 	// Release locks in order
 	int i = -1;
 	while(!perTxLocks[threadId].empty()) {
@@ -332,9 +371,15 @@ void TPCC_DB::fill_order_line_entry(int _ol_w_id, int _ol_d_id, int _ol_o_id, in
 
 void TPCC_DB::fill_new_order_entry(int _no_w_id, int _no_d_id, int _no_o_id) {
 	int indx = (_no_w_id-1)*10*900 + (_no_d_id-1)*900 + (_no_o_id-2101) % 900;
-	if(TPCC_DEBUG)
+	/*if(TPCC_DEBUG)
 		std::cout<<"w_id, d_id, o_id, indx: "<<_no_w_id<<", "<<_no_d_id<<", "
+			<<_no_o_id<<", "<<indx<<std::endl; */
+	if(TPCC_DEBUG) { //#changed to write to file.
+		std::stringstream str;
+		str << "w_id, d_id, o_id, indx: "<<_no_w_id<<", "<<_no_d_id<<", "
 			<<_no_o_id<<", "<<indx<<std::endl;
+			write_to_file(str.str());
+	}
 	new_order[indx].no_o_id = _no_o_id;
 	new_order[indx].no_d_id = _no_d_id;
 	new_order[indx].no_w_id = _no_w_id;
@@ -454,9 +499,14 @@ void TPCC_DB::new_order_tx(int threadId, int w_id, int d_id, int c_id) {
 	queue_t reqLocks;
 	reqLocks.push(d_indx); // Lock for district
 
-	if(TPCC_DEBUG)
-		std::cout<<"**NOTx** district lock id: "<<d_indx<<std::endl; 
-
+	/*if(TPCC_DEBUG) //#changed write to file.
+		std::cout<<"**NOTx** district lock id: "<<d_indx<<std::endl;
+*/
+	if(TPCC_DEBUG) { //#changed to write to file.
+		std::stringstream str2;
+		str2 <<"**NOTx** district lock id: "<<d_indx<<std::endl;
+			write_to_file(str2.str());
+	}
 	int ol_cnt = get_random(threadId, 5, 15);
 	int item_ids[ol_cnt];
 	for(int i=0; i<ol_cnt; i++) {
@@ -477,22 +527,36 @@ void TPCC_DB::new_order_tx(int threadId, int w_id, int d_id, int c_id) {
 
 
 	std::sort(item_ids, item_ids+ol_cnt);
-	if(TPCC_DEBUG)
-		std::cout<<"**NOTx** ol_cnt: "<<ol_cnt<<std::endl; 
-
+	/*if(TPCC_DEBUG)
+		std::cout<<"**NOTx** ol_cnt: "<<ol_cnt<<std::endl;
+*/
+if(TPCC_DEBUG) { //#changed to write to file.
+		std::stringstream str3;
+		str3 <<"**NOTx** ol_cnt: "<<ol_cnt<<std::endl;
+			write_to_file(str3.str());
+	}
 	for(int i=0; i<ol_cnt; i++) {
 		int item_lock_id = num_warehouses*10 + (w_id-1)*NUM_ITEMS + item_ids[i] - 1;
 
 		reqLocks.push(item_lock_id); // Lock for each item in stock table
-		if(TPCC_DEBUG)
-			std::cout<<"**NOTx** item lock id: "<<item_lock_id<<" thread id: "<<threadId<<std::endl; 
+		/*if(TPCC_DEBUG)
+			std::cout<<"**NOTx** item lock id: "<<item_lock_id<<" thread id: "<<threadId<<std::endl;*/
+		if(TPCC_DEBUG) { //#changed to write to file.
+			std::stringstream str4;
+			str4 <<"**NOTx** item lock id: "<<item_lock_id<<" thread id: "<<threadId<<std::endl;
+				write_to_file(str4.str());
+		}
 	}
 
-	acquire_locks(threadId, reqLocks);
-	if(TPCC_DEBUG)
-		std::cout<<"**NOTx** finished start tx: "<<std::endl; 
-
-
+	acquire_locks(threadId, reqLocks); //#todo look into if relevant to argo non sync locking.
+	/*if(TPCC_DEBUG)
+		std::cout<<"**NOTx** finished start tx: "<<std::endl;
+	*/
+	if(TPCC_DEBUG) { //#changed to write to file.
+			std::stringstream str5;
+			str5 <<"**NOTx** finished start tx: "<<std::endl;
+				write_to_file(str5.str());
+	}
 	float w_tax = warehouse[w_indx].w_tax;
 
 	float d_tax = district[d_indx].d_tax;
@@ -503,18 +567,24 @@ void TPCC_DB::new_order_tx(int threadId, int w_id, int d_id, int c_id) {
 	int o_indx = (w_id-1)*10*3000 + (d_id-1)*3000 + (d_o_id-1)%3000;
 
 	district[d_indx].d_next_o_id++;
-	fill_new_order_entry(w_id,d_id,d_o_id);
-	update_order_entry(w_id, d_id, d_o_id, c_id, ol_cnt);
+	fill_new_order_entry(w_id,d_id,d_o_id); //#todo Verify by printing line 383-385 to file to ensure it was updated.
+	update_order_entry(w_id, d_id, d_o_id, c_id, ol_cnt); //#todo verify by printing lines 466-470 to file.
 	float total_amount = 0.0;
 	for(int i=0; i<ol_cnt; i++) {
-		update_stock_entry(threadId, w_id, item_ids[i], d_id, total_amount);
+		update_stock_entry(threadId, w_id, item_ids[i], d_id, total_amount); //#todo verify by printing changes to file in function at 474.
 	}
 
-	if(TPCC_DEBUG)
+	/*if(TPCC_DEBUG)
 		std::cout<<"d_id, d_o_id, ol_cnt, total_amount: "<<d_id<<", "<<d_o_id<<", "<<
 			ol_cnt<<", "<<total_amount<<std::endl;
-
-	release_locks(threadId);
+*/
+	if(TPCC_DEBUG) { //#changed to write to file.
+			std::stringstream str6;
+			str6 <<"d_id, d_o_id, ol_cnt, total_amount: "<<d_id<<", "<<d_o_id<<", "<<
+				ol_cnt<<", "<<total_amount<<std::endl;
+				write_to_file(str6.str());
+	}
+	release_locks(threadId); //#todo look into if relevant to argo non sync locking.
 	return;
 }
 
