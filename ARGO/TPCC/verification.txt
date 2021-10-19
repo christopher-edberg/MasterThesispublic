@@ -1,0 +1,12 @@
+fill_new_order_entry:
+	(1): print values of calls to the function AND thread_id to one file.
+	(2): print values before changing and after to a different file than in (1).
+	(3): Sort file by new order index and see if the changes to the function matches the update history.
+
+update_order_entry:
+	Same steps as in previous function.
+
+update_stock_entry:
+	Same steps as in first function.	
+
+
