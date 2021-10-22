@@ -16,8 +16,8 @@ This file defines the various functions of the tpcc database
 #include <queue>
 #include <algorithm>
 #include <iostream>
-#if TPCC_DEBUG == 1
-#include <sstream>
+#if TPCC_DEBUG != 0
+	#include <sstream>
 #endif
 extern int workrank;
 extern int numtasks;
@@ -27,14 +27,19 @@ extern int numtasks;
 
 
 // Printing function for verification
-void write_to_file(std::string string)
+void write_to_file(std::string string, char* output = NULL)
 {
 
 	int i, rv,rv2;
 	FILE *file;
 	char *outputFile;
 	//if (argo::node_id() == 0) {
-		outputFile = (char*)"out.txt";
+		if(output == NULL) {
+			outputFile = (char*)"out.txt";
+		}
+		else {
+			outputFile =output;
+		}
 	/*}
 	else {
 		outputFile = (char*)"out2.txt";
@@ -58,7 +63,9 @@ void write_to_file(std::string string)
 }
 
 //End of printing function
-
+#if TPCC_DEBUG == 3
+int in_critical_section = 0; //Used to only trigger prints in function calls after the first CS section and not during setup.
+#endif
 
 void distribute(int& beg,
 		int& end,
@@ -371,18 +378,59 @@ void TPCC_DB::fill_order_line_entry(int _ol_w_id, int _ol_d_id, int _ol_o_id, in
 
 void TPCC_DB::fill_new_order_entry(int _no_w_id, int _no_d_id, int _no_o_id) {
 	int indx = (_no_w_id-1)*10*900 + (_no_d_id-1)*900 + (_no_o_id-2101) % 900;
-	/*if(TPCC_DEBUG)
-		std::cout<<"w_id, d_id, o_id, indx: "<<_no_w_id<<", "<<_no_d_id<<", "
-			<<_no_o_id<<", "<<indx<<std::endl; */
-	if(TPCC_DEBUG) { //#changed to write to file.
-		std::stringstream str;
-		str << "w_id, d_id, o_id, indx: "<<_no_w_id<<", "<<_no_d_id<<", "
-			<<_no_o_id<<", "<<indx<<std::endl;
-			write_to_file(str.str());
-	}
+
+	#if TPCC_DEBUG != 0
+		if(TPCC_DEBUG == 1)
+			std::cout<<"w_id, d_id, o_id, indx: "<<_no_w_id<<", "<<_no_d_id<<", "
+				<<_no_o_id<<", "<<indx<<std::endl;
+		if(TPCC_DEBUG == 2) { //#changed to write to file.
+			std::stringstream str;
+			str << "w_id, d_id, o_id, indx: "<<_no_w_id<<", "<<_no_d_id<<", "
+				<<_no_o_id<<", "<<indx<<std::endl;
+				write_to_file(str.str());
+		}
+	#endif
+
 	new_order[indx].no_o_id = _no_o_id;
 	new_order[indx].no_d_id = _no_d_id;
 	new_order[indx].no_w_id = _no_w_id;
+}
+
+void TPCC_DB::fill_new_order_entry(int _no_w_id, int _no_d_id, int _no_o_id, int threadId) { //#changed Overloaded to add threadId for verification.
+	int indx = (_no_w_id-1)*10*900 + (_no_d_id-1)*900 + (_no_o_id-2101) % 900;
+
+	#if TPCC_DEBUG != 0
+		if(TPCC_DEBUG == 1)
+			std::cout<<"w_id, d_id, o_id, indx: "<<_no_w_id<<", "<<_no_d_id<<", "
+				<<_no_o_id<<", "<<indx<<std::endl;
+		if(TPCC_DEBUG == 2) { //#changed to write to file.
+			std::stringstream str;
+			str << "w_id, d_id, o_id, indx: "<<_no_w_id<<", "<<_no_d_id<<", "
+				<<_no_o_id<<", "<<indx<<std::endl;
+				write_to_file(str.str());
+		}
+		#if TPCC_DEBUG == 3
+			std::stringstream str;
+			if(in_critical_section == 1) {
+				str <<std::endl<<"fill_new_order_entry_before: Thread id: "<<threadId<<", Node id: "<<workrank<<" index: "<<indx<<", variables: "<<
+				new_order[indx].no_o_id<<", "<<new_order[indx].no_d_id<<", "<<new_order[indx].no_w_id<<std::endl;
+				//write_to_file(str.str(),(char*)"fill_new_order_entry_change.txt");
+			}
+		#endif
+	#endif
+
+	new_order[indx].no_o_id = _no_o_id;
+	new_order[indx].no_d_id = _no_d_id;
+	new_order[indx].no_w_id = _no_w_id;
+
+	#if TPCC_DEBUG == 3
+		if(in_critical_section == 1) {
+			//std::stringstream str2;
+			str <<"fill_new_order_entry_after: Thread id: "<<threadId<<", Node id: "<<workrank<<" index: "<<indx<<", variables: "<<
+			new_order[indx].no_o_id<<", "<<new_order[indx].no_d_id<<", "<<new_order[indx].no_w_id<<std::endl;
+			write_to_file(str.str(),(char*)"fill_new_order_entry_change.txt");
+		}
+	#endif
 }
 
 int TPCC_DB::rand_local(int min, int max) {
@@ -469,12 +517,54 @@ void TPCC_DB::update_order_entry(int _w_id, short _d_id, int _o_id, int _c_id, i
 	order[indx].o_ol_cnt = _ol_cnt;
 	order[indx].o_c_id = _c_id;
 	fill_time(order[indx].o_entry_d);
+
 }
+
+
+void TPCC_DB::update_order_entry(int _w_id, short _d_id, int _o_id, int _c_id, int _ol_cnt, int threadId) { //#changed Overloaded to add threadId for verification.
+	int indx = (_w_id-1)*10*3000 + (_d_id-1)*3000 + (_o_id-1)%3000;
+
+	#if TPCC_DEBUG == 3
+		std::stringstream str;
+		if(in_critical_section == 1) {
+			str <<std::endl<<"update_order_entry_before: Thread id: "<<threadId<<", Node id: "<<workrank<<", index: "<<indx<<", variables: "<<
+			order[indx].o_id<<", "<<order[indx].o_ol_cnt<<", "<<order[indx].o_c_id<<std::endl;
+			//write_to_file(str.str(),(char*)"update_order_entry_change.txt");
+		}
+	#endif
+
+	order[indx].o_id = _o_id;
+	order[indx].o_carrier_id = 0;
+	order[indx].o_all_local = 1;
+	order[indx].o_ol_cnt = _ol_cnt;
+	order[indx].o_c_id = _c_id;
+	fill_time(order[indx].o_entry_d);
+
+	#if TPCC_DEBUG == 3
+		if(in_critical_section == 1) {
+			//std::stringstream str2;
+			str <<"update_order_entry_after: Thread id: "<<threadId<<", Node id: "<<workrank<<", index: "<<indx<<", variables: "<<
+			order[indx].o_id<<", "<<order[indx].o_ol_cnt<<", "<<order[indx].o_c_id<<std::endl;
+			write_to_file(str.str(),(char*)"update_order_entry_change.txt");
+		}
+	#endif
+}
+
+
 
 void TPCC_DB::update_stock_entry(int threadId, int _w_id, int _i_id, int _d_id, float &amount) {
 	int indx = (_w_id-1)*NUM_ITEMS + _i_id-1;
 	//int ol_quantity = get_random(threadId, 1, 10);
 	int ol_quantity = 7;
+
+	#if TPCC_DEBUG == 3
+		std::stringstream str;
+		if(in_critical_section == 1) {
+			str <<std::endl<<"update_stock_entry_before: Thread id: "<<threadId<<", Node id: "<<workrank<<", index: "<<indx<<", variables: "<<
+			stock[indx].s_quantity<<", "<<stock[indx].s_ytd<<", "<<stock[indx].s_order_cnt<<", "<<amount<<std::endl;
+			//write_to_file(str.str(),(char*)"update_stock_entry_change.txt");
+		}
+	#endif
 
 	if(stock[indx].s_quantity - ol_quantity > 10) {
 		stock[indx].s_quantity -= ol_quantity;
@@ -489,6 +579,15 @@ void TPCC_DB::update_stock_entry(int threadId, int _w_id, int _i_id, int _d_id, 
 
 
 	amount += ol_quantity * item[_i_id-1].i_price;
+
+	#if TPCC_DEBUG == 3
+		if(in_critical_section == 1) {
+			//std::stringstream str2;
+			str <<"update_stock_entry_after: Thread id: "<<threadId<<", Node id: "<<workrank<<", index: "<<indx<<", variables: "<<
+			stock[indx].s_quantity<<", "<<stock[indx].s_ytd<<", "<<stock[indx].s_order_cnt<<", "<<amount<<std::endl;
+			write_to_file(str.str(),(char*)"update_stock_entry_change.txt");
+		}
+	#endif
 }
 
 void TPCC_DB::new_order_tx(int threadId, int w_id, int d_id, int c_id) {
@@ -496,17 +595,24 @@ void TPCC_DB::new_order_tx(int threadId, int w_id, int d_id, int c_id) {
 	int d_indx = (w_id-1)*10 + (d_id-1);
 	int c_indx = (w_id-1)*10*3000 + (d_id-1)*3000 + (c_id-1);
 
+	#if TPCC_DEBUG == 3
+		in_critical_section = 1; //Used to only trigger prints in function calls after the first CS section and not during setup.
+	#endif
+
 	queue_t reqLocks;
 	reqLocks.push(d_indx); // Lock for district
 
-	/*if(TPCC_DEBUG) //#changed write to file.
-		std::cout<<"**NOTx** district lock id: "<<d_indx<<std::endl;
-*/
-	if(TPCC_DEBUG) { //#changed to write to file.
-		std::stringstream str2;
-		str2 <<"**NOTx** district lock id: "<<d_indx<<std::endl;
-			write_to_file(str2.str());
-	}
+	#if TPCC_DEBUG != 0
+		if(TPCC_DEBUG == 1) //#changed write to file.
+			std::cout<<"**NOTx** district lock id: "<<d_indx<<std::endl;
+
+		if(TPCC_DEBUG == 2) { //#changed to write to file.
+			std::stringstream str2;
+			str2 <<"**NOTx** district lock id: "<<d_indx<<std::endl;
+				write_to_file(str2.str());
+		}
+	#endif
+
 	int ol_cnt = get_random(threadId, 5, 15);
 	int item_ids[ol_cnt];
 	for(int i=0; i<ol_cnt; i++) {
@@ -527,36 +633,42 @@ void TPCC_DB::new_order_tx(int threadId, int w_id, int d_id, int c_id) {
 
 
 	std::sort(item_ids, item_ids+ol_cnt);
-	/*if(TPCC_DEBUG)
-		std::cout<<"**NOTx** ol_cnt: "<<ol_cnt<<std::endl;
-*/
-if(TPCC_DEBUG) { //#changed to write to file.
-		std::stringstream str3;
-		str3 <<"**NOTx** ol_cnt: "<<ol_cnt<<std::endl;
-			write_to_file(str3.str());
-	}
+	#if TPCC_DEBUG != 0
+		if(TPCC_DEBUG == 1)
+			std::cout<<"**NOTx** ol_cnt: "<<ol_cnt<<std::endl;
+
+		if(TPCC_DEBUG == 2) { //#changed to write to file.
+				std::stringstream str3;
+				str3 <<"**NOTx** ol_cnt: "<<ol_cnt<<std::endl;
+					write_to_file(str3.str());
+		}
+	#endif
 	for(int i=0; i<ol_cnt; i++) {
 		int item_lock_id = num_warehouses*10 + (w_id-1)*NUM_ITEMS + item_ids[i] - 1;
 
 		reqLocks.push(item_lock_id); // Lock for each item in stock table
-		/*if(TPCC_DEBUG)
-			std::cout<<"**NOTx** item lock id: "<<item_lock_id<<" thread id: "<<threadId<<std::endl;*/
-		if(TPCC_DEBUG) { //#changed to write to file.
-			std::stringstream str4;
-			str4 <<"**NOTx** item lock id: "<<item_lock_id<<" thread id: "<<threadId<<std::endl;
-				write_to_file(str4.str());
-		}
+		#if TPCC_DEBUG != 0
+			if(TPCC_DEBUG == 1)
+				std::cout<<"**NOTx** item lock id: "<<item_lock_id<<" thread id: "<<threadId<<std::endl;
+			if(TPCC_DEBUG == 2) { //#changed to write to file.
+				std::stringstream str4;
+				str4 <<"**NOTx** item lock id: "<<item_lock_id<<" thread id: "<<threadId<<std::endl;
+					write_to_file(str4.str());
+			}
+		#endif
 	}
 
 	acquire_locks(threadId, reqLocks); //#todo look into if relevant to argo non sync locking.
-	/*if(TPCC_DEBUG)
-		std::cout<<"**NOTx** finished start tx: "<<std::endl;
-	*/
-	if(TPCC_DEBUG) { //#changed to write to file.
-			std::stringstream str5;
-			str5 <<"**NOTx** finished start tx: "<<std::endl;
-				write_to_file(str5.str());
-	}
+	#if TPCC_DEBUG != 0
+		if(TPCC_DEBUG == 1)
+			std::cout<<"**NOTx** finished start tx: "<<std::endl;
+
+		if(TPCC_DEBUG == 2) { //#changed to write to file.
+				std::stringstream str5;
+				str5 <<"**NOTx** finished start tx: "<<std::endl;
+					write_to_file(str5.str());
+		}
+	#endif
 	float w_tax = warehouse[w_indx].w_tax;
 
 	float d_tax = district[d_indx].d_tax;
@@ -567,23 +679,64 @@ if(TPCC_DEBUG) { //#changed to write to file.
 	int o_indx = (w_id-1)*10*3000 + (d_id-1)*3000 + (d_o_id-1)%3000;
 
 	district[d_indx].d_next_o_id++;
+
+	#if TPCC_DEBUG == 3
+		std::stringstream str6;
+		str6 <<"fill_new_order_entry: Thread id: "<<threadId<<", Node id: "<<workrank<<", Index: "<<((w_id-1)*10*900 + (d_id-1)*900 + (d_o_id-2101) % 900)<<", district[d_indx].d_next_o_id: "<<district[d_indx].d_next_o_id<<
+		", Varibles: "<<w_id<<", "<<d_id<<", "<<d_o_id<<std::endl;
+		write_to_file(str6.str(),(char*)"fill_new_order_entry.txt");
+		fill_new_order_entry(w_id, d_id, d_o_id, threadId); //#changed Overloaded to add threadId for verification.
+	#else
 	fill_new_order_entry(w_id,d_id,d_o_id); //#todo Verify by printing line 383-385 to file to ensure it was updated.
-	update_order_entry(w_id, d_id, d_o_id, c_id, ol_cnt); //#todo verify by printing lines 466-470 to file.
+	#endif
+
+	#if TPCC_DEBUG == 3
+		std::stringstream str7;
+		str7 <<"update_order_entry: Thread id: "<<threadId<<", Node id: "<<workrank<<", index: "<<((w_id-1)*10*3000 + (d_id-1)*3000 + (d_o_id-1)%3000)<<", variables: "<<
+		w_id<<", "<< d_id<<", "<< d_o_id<<", "<< c_id<<", "<< ol_cnt<<std::endl;
+		write_to_file(str7.str(),(char*)"update_order_entry.txt");
+		update_order_entry(w_id, d_id, d_o_id, c_id, ol_cnt,threadId); //#todo verify by printing lines 466-470 to file.
+	#else
+		update_order_entry(w_id, d_id, d_o_id, c_id, ol_cnt);
+	#endif
+
 	float total_amount = 0.0;
+	//Adds a newline to group up update_stock_entry
+	#if TPCC_DEBUG == 3
+		std::stringstream str8;
+		str8<<std::endl;
+		write_to_file(str8.str(),(char*)"update_stock_entry.txt");
+	#endif
+
+	#if TPCC_DEBUG == 3
+		std::stringstream str9;
+	#endif
 	for(int i=0; i<ol_cnt; i++) {
+
+		#if TPCC_DEBUG == 3
+			str9 <<"update_stock_entry: Thread id: "<<threadId<<", Node id: "<<workrank<<", index: "<< ((w_id-1)*NUM_ITEMS + item_ids[i]-1)<<", variables: "<<
+			threadId<<", "<< w_id<<", "<< item_ids[i]<<", "<< d_id<<", "<< total_amount<<std::endl;
+		#endif
 		update_stock_entry(threadId, w_id, item_ids[i], d_id, total_amount); //#todo verify by printing changes to file in function at 474.
 	}
+	//Adds a newline to end grouping of update_stock_entry
+	#if TPCC_DEBUG == 3
+		str9 <<std::endl;
+		write_to_file(str9.str(),(char*)"update_stock_entry.txt");
+	#endif
 
-	/*if(TPCC_DEBUG)
-		std::cout<<"d_id, d_o_id, ol_cnt, total_amount: "<<d_id<<", "<<d_o_id<<", "<<
-			ol_cnt<<", "<<total_amount<<std::endl;
-*/
-	if(TPCC_DEBUG) { //#changed to write to file.
-			std::stringstream str6;
-			str6 <<"d_id, d_o_id, ol_cnt, total_amount: "<<d_id<<", "<<d_o_id<<", "<<
+	#if TPCC_DEBUG != 0
+		if(TPCC_DEBUG == 1)
+			std::cout<<"d_id, d_o_id, ol_cnt, total_amount: "<<d_id<<", "<<d_o_id<<", "<<
 				ol_cnt<<", "<<total_amount<<std::endl;
-				write_to_file(str6.str());
-	}
+
+		if(TPCC_DEBUG == 2) { //#changed to write to file.
+				std::stringstream str6;
+				str6 <<"d_id, d_o_id, ol_cnt, total_amount: "<<d_id<<", "<<d_o_id<<", "<<
+					ol_cnt<<", "<<total_amount<<std::endl;
+					write_to_file(str6.str());
+		}
+	#endif
 	release_locks(threadId); //#todo look into if relevant to argo non sync locking.
 	return;
 }

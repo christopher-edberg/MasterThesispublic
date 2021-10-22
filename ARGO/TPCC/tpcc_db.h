@@ -25,7 +25,7 @@ This file declares the tpcc database and the accesor transactions.
 #define NUM_ITEMS 100
 #define NUM_LOCKS NUM_WAREHOUSES*10 + NUM_WAREHOUSES*NUM_ITEMS
 
-#define TPCC_DEBUG 1
+#define TPCC_DEBUG 3 // 0 Disable, 1 for Printing debug data to terminal, 2 for Printing debug data to file, 3 for Printing critical section verifcation data to files.
 #define NUM_RNDM_SEEDS 1280
 
 // Macro for only node0 to do stuff
@@ -73,6 +73,7 @@ class TPCC_DB {
 		void fill_order_entry(int _o_w_id, int _o_d_id, int _o_id);
 		void fill_order_line_entry(int _ol_w_id, int _ol_d_id, int _ol_o_id, int _o_ol_cnt, long long _o_entry_d);
 		void fill_new_order_entry(int _no_w_id, int _no_d_id, int _no_o_id);
+		void fill_new_order_entry(int _no_w_id, int _no_d_id, int _no_o_id,int threadId); //#changed Overloaded to add threadId for verification.
 
 		void random_a_string(int min, int max, char* string_ptr);
 		void random_n_string(int min, int max, char* string_ptr);
@@ -91,6 +92,7 @@ class TPCC_DB {
 		void copy_order_line_info(order_line_entry &dest, order_line_entry &source);
 
 		void update_order_entry(int _w_id, short _d_id, int _o_id, int _c_id, int _ol_cnt);
+		void update_order_entry(int _w_id, short _d_id, int _o_id, int _c_id, int _ol_cnt, int threadId); //#changed Overloaded to add threadId for verification.
 		void update_stock_entry(int threadId, int _w_id, int _i_id, int _d_id, float &amount);
 
 		unsigned long get_random(int thread_id, int min, int max);
