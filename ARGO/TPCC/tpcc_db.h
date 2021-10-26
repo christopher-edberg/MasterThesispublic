@@ -27,6 +27,7 @@ This file declares the tpcc database and the accesor transactions.
 
 #define TPCC_DEBUG 3 // 0 Disable, 1 for Printing debug data to terminal, 2 for Printing debug data to file, 3 for Printing critical section verifcation data to files.
 #define NUM_RNDM_SEEDS 1280
+#define SELECTIVE_ACQREL 1 //0 for normal full coherence, 1 for selective coherence in critical sections.
 
 // Macro for only node0 to do stuff
 #define WEXEC(inst) ({ if (workrank == 0) inst; })
@@ -73,7 +74,8 @@ class TPCC_DB {
 		void fill_order_entry(int _o_w_id, int _o_d_id, int _o_id);
 		void fill_order_line_entry(int _ol_w_id, int _ol_d_id, int _ol_o_id, int _o_ol_cnt, long long _o_entry_d);
 		void fill_new_order_entry(int _no_w_id, int _no_d_id, int _no_o_id);
-		void fill_new_order_entry(int _no_w_id, int _no_d_id, int _no_o_id,int threadId); //#changed Overloaded to add threadId for verification.
+		void fill_new_order_entry_CS(int _no_w_id, int _no_d_id, int _no_o_id); //#changed Specifically for use in CS as it uses selective_acquire/selective_release.
+		void fill_new_order_entry_CS(int _no_w_id, int _no_d_id, int _no_o_id,int threadId); //#changed Overloaded to add threadId for verification.
 
 		void random_a_string(int min, int max, char* string_ptr);
 		void random_n_string(int min, int max, char* string_ptr);
