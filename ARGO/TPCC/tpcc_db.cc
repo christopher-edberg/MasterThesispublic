@@ -646,7 +646,7 @@ void TPCC_DB::update_stock_entry(int threadId, int _w_id, int _i_id, int _d_id, 
 			argo::backend::selective_release(&stock[indx].s_quantity, sizeof(float));
 			argo::backend::selective_release(&stock[indx].s_ytd, sizeof(float));
 			argo::backend::selective_release(&stock[indx].s_order_cnt, sizeof(float));
-			argo::backend::selective_release(&item[_i_id-1].i_price, sizeof(float)); //#todo check if needed ?
+			//argo::backend::selective_release(&item[_i_id-1].i_price, sizeof(float)); //#todo check if needed ?
 	#endif
 
 	#if TPCC_DEBUG == 3
