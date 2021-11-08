@@ -27,7 +27,7 @@ void initialize() {
 	tpcc_db = new TPCC_DB;
 	tpcc_db->initialize(NUM_WAREHOUSES, NUM_THREADS*numtasks, NUM_LOCKS);
 	argo::barrier();
-	
+
 	WEXEC(fprintf(stderr, "Created tpcc at %p\n", (void *)tpcc_db));
 }
 
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
 				(tv_end.tv_sec - tv_start.tv_sec) * 1000000));
 	WEXEC(fexec << "TPCC" << ", " << std::to_string((tv_end.tv_usec - tv_start.tv_usec) + (tv_end.tv_sec - tv_start.tv_sec) * 1000000) << std::endl);
 	WEXEC(fexec.close());
-	
+
 	delete tpcc_db;
 
 	WEXEC(std::cout<<"Done with threads"<<std::endl);

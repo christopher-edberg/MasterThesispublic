@@ -15,9 +15,12 @@ Ioannis Anevlavis <ioannis.anevlavis@etascale.com>
 
 #include <vector>
 
-#define NUM_SUB_ITEMS 64 
-#define NUM_OPS 10000
-#define NUM_THREADS 4 
+#define NUM_SUB_ITEMS 64
+#define NUM_OPS 9984 // has to be evenly divisible by number of nodes* threads.
+#define NUM_THREADS 8
+
+#define SELECTIVE_ACQREL 1 //0 for normal full coherence, 1 for selective coherence in critical sections.
+#define DEBUG 1
 
 typedef struct item item;
 
@@ -44,8 +47,8 @@ struct item {
 };
 
 class concurrent_queue {
-	item *head;
-	item *tail;
+	item **head;
+	item **tail;
 	argo::globallock::cohort_lock *enq_lock;
 	argo::globallock::cohort_lock *deq_lock;
 	int num_sub_items;
@@ -56,4 +59,11 @@ class concurrent_queue {
 	void push(int);
 	bool pop(int&);
 	void init();
+	void check();
+
+	void printCQ(); //Prints CQ.
+	void write_to_file(std::string string, char* output = NULL); //Prints strings to files.
+	void printCQtofile(char* output = NULL);
+	int returnHead();
+	item* returnNext();
 };
