@@ -20,10 +20,13 @@ This file uses the PersistentCache to enable multi-threaded updates to it.
 #include <fstream>
 #include <iostream>
 
-#define NUM_ELEMS_PER_DATUM 2 
+#define NUM_ELEMS_PER_DATUM 2
 #define NUM_ROWS 1000
 #define NUM_UPDATES 1000
 #define NUM_THREADS 4
+
+#define SELECTIVE_ACQREL 1
+#define DEBUG 1
 
 int workrank;
 int numtasks;
@@ -42,7 +45,7 @@ void distribute(int& beg,
 }
 
 // Persistent cache organization. Each Key has an associated Value in the data array.
-// Each datum in the data array consists of up to 8 elements. 
+// Each datum in the data array consists of up to 8 elements.
 // The number of elements actually used by the application is a runtime argument.
 struct Element {
 	int32_t value_[NUM_ELEMS_PER_DATUM];
@@ -63,11 +66,30 @@ struct pc {
 
 uint32_t pc_rgn_id;
 pc* P;
+//Verification function
+void check() {
+		int checksum = 0;
+		for (int i = 0; i<NUM_ROWS; i++) {
+			for(int y = 0; y<NUM_ELEMS_PER_DATUM; y++) {
+				checksum += P->hashmap[i].elements_->value_[y];
+			}
+		}
+		int expectedsum = 0;
+		int chunk = (NUM_UPDATES/(NUM_THREADS*numtasks))-1; //125
+		expectedsum = (NUM_ELEMS_PER_DATUM-1 * (NUM_ELEMS_PER_DATUM-1 + 1)/2)*NUM_UPDATES + 2*(NUM_THREADS*numtasks)*(chunk * (chunk + 1)/2);
+		assert(checksum == expectedsum);
+		std::cout<<"Verification succesful!"<<std::endl;
+}
+//End of verification function
 
 void datum_init(pc* p) {
 	for(int i = 0; i < NUM_ROWS; i++) {
 		p->hashmap[i].elements_ = argo::conew_<Element>();
-		p->hashmap[i].lock_ = new argo::globallock::cohort_lock();
+		#if SELECTIVE_ACQREL
+			p->hashmap[i].lock_ = new argo::globallock::cohort_lock(true);
+		#else
+			p->hashmap[i].lock_ = new argo::globallock::cohort_lock();
+		#endif
 	}
 	WEXEC(std::cout << "Finished allocating elems & locks" << std::endl);
 
@@ -93,10 +115,20 @@ void datum_free(pc* p) {
 }
 
 void datum_set(int key, int value) {
-	P->hashmap[key].lock_->lock();
+	P->hashmap[key].lock_->lock(); //todo change to selective
+	#if SELECTIVE_ACQREL
+		argo::backend::selective_acquire(P->hashmap[key].elements_, sizeof(Element));
+	#endif
 
 	for(int j = 0; j < NUM_ELEMS_PER_DATUM; j++)
+	#if DEBUG
+		P->hashmap[key].elements_->value_[j] += value+j;
+	#else
 		P->hashmap[key].elements_->value_[j] = value+j;
+	#endif
+	#if SELECTIVE_ACQREL
+		argo::backend::selective_release(P->hashmap[key].elements_, sizeof(Element));
+	#endif
 
 	P->hashmap[key].lock_->unlock();
 }
@@ -155,6 +187,10 @@ int main (int argc, char* argv[]) {
 				(tv_end.tv_sec - tv_start.tv_sec) * 1000000));
 	WEXEC(fexec << "PC" << ", " << std::to_string((tv_end.tv_usec - tv_start.tv_usec) + (tv_end.tv_sec - tv_start.tv_sec) * 1000000) << std::endl);
 	WEXEC(fexec.close());
+	#if DEBUG
+		WEXEC(check());
+		argo::barrier();
+	#endif
 
 	datum_free(P);
 	delete[] P->hashmap;
