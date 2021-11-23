@@ -51,7 +51,9 @@ int main(int argc, char* argv[]) {
 
 	workrank = argo::node_id();
 	numtasks = argo::number_of_nodes();
-
+	#if SELECTIVE_ACQREL
+		WEXEC(printf("Running selective coherence version \n"));
+	#endif
 	WEXEC(std::cout<<"In main"<<std::endl);
 	struct timeval tv_start;
 	struct timeval tv_end;

@@ -18,9 +18,12 @@ Ioannis Anevlavis <ioannis.anevlavis@etascale.com>
 #include <iostream>
 
 #define TREE_LENGTH 100
-#define NUM_UPDATES_PER_CS 64 
+#define NUM_UPDATES_PER_CS 64
 #define NUM_OPS 10000
 #define NUM_THREADS 4
+
+#define SELECTIVE_ACQREL 0
+#define DEBUG 1
 
 #define MAX_LEN 16384  // Max total size = 512KB
 
@@ -53,15 +56,15 @@ class Red_Black_Tree {
 	Node* tree_1_end;
 
 	Node* start_1;
-	// c++ 98 does not support unordered_set (O(1) insertion/deletion), 
-	// so we use "std::vector". Although that may cause duplicated operations 
-	// on the same node, the total complexity remains O(log(n)). However, using 
+	// c++ 98 does not support unordered_set (O(1) insertion/deletion),
+	// so we use "std::vector". Although that may cause duplicated operations
+	// on the same node, the total complexity remains O(log(n)). However, using
 	// "std::set" will increase it to O((log(n))^2).
-	// FIXME: there might be redundant changes of node recorded. 
+	// FIXME: there might be redundant changes of node recorded.
 	std::vector<Node*> changed_nodes;
 
 	// mutex for the whole tree
-	// note: this program has NO parallelism. Using mutex only creates a 
+	// note: this program has NO parallelism. Using mutex only creates a
 	// thread-safe tree
 	// argo::globallock::cohort_lock* lock_1;
 
@@ -75,7 +78,7 @@ class Red_Black_Tree {
 	Node* createNode(int _val);
 	// Only record changes in the current tree
 	void recordChange(Node* node);
-	// Apply the changes in the current tree to the backup tree and change 
+	// Apply the changes in the current tree to the backup tree and change
 	// the sel bit
 	void copy_changes();
 

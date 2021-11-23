@@ -27,6 +27,7 @@ This microbenchmark swaps two items in an array.
 #define NUM_THREADS 4
 
 #define ENABLE_VERIFICATION 1	//Enable/Disable verification functions.
+#define SELECTIVE_ACQREL 0
 
 int workrank;
 int numtasks;
@@ -76,7 +77,11 @@ int testing=0;
 void datum_init(sps* s) {
 	for(int i = 0; i < NUM_ROWS; i++) {
 		s->array[i].elements_ = argo::conew_<Element>();
-		s->array[i].lock_ = new argo::globallock::cohort_lock(true); //todo change lock declaration to non synch
+		#if SELECTIVE_ACQREL
+			s->array[i].lock_ = new argo::globallock::cohort_lock(true);
+		#else
+			s->array[i].lock_ = new argo::globallock::cohort_lock();
+		#endif
 	}
 	WEXEC(std::cout << "Finished allocating elems & locks" << std::endl);
 
@@ -119,9 +124,15 @@ bool swap(unsigned int index_a, unsigned int index_b) {
 	if (index_a == index_b) {
 		#if ENABLE_VERIFICATION == 1
 			S->array[index_a].lock_->lock();
-			argo::backend::selective_acquire(S->array[index_a].elements_, sizeof(Element));
+			#if SELECTIVE_ACQREL
+				argo::backend::selective_acquire(S->array[index_a].elements_, sizeof(Element));
+			#endif
+
 			S->array[index_a].elements_->verification = S->array[index_a].elements_->verification+ 2;
-			argo::backend::selective_release(S->array[index_a].elements_, sizeof(Element));
+
+			#if SELECTIVE_ACQREL
+				argo::backend::selective_release(S->array[index_a].elements_, sizeof(Element));
+			#endif
 			S->array[index_a].lock_->unlock();
 		#endif
 		return true;
@@ -136,9 +147,10 @@ bool swap(unsigned int index_a, unsigned int index_b) {
 	S->array[index_a].lock_->lock();  //#changed Changed to selective acq/rel.
 	S->array[index_b].lock_->lock();
 
-	argo::backend::selective_acquire(S->array[index_a].elements_, sizeof(Element));//sizeof(Datum));
-	argo::backend::selective_acquire(S->array[index_b].elements_, sizeof(Element));
-
+	#if SELECTIVE_ACQREL
+		argo::backend::selective_acquire(S->array[index_a].elements_, sizeof(Element));//sizeof(Datum));
+		argo::backend::selective_acquire(S->array[index_b].elements_, sizeof(Element));
+	#endif
 	//swap array values
 	Element temp;
 	temp = *(S->array[index_a].elements_);
@@ -150,8 +162,10 @@ bool swap(unsigned int index_a, unsigned int index_b) {
 		S->array[index_b].elements_->verification = S->array[index_b].elements_->verification+ 1;
 	#endif
 
-	argo::backend::selective_release(S->array[index_a].elements_, sizeof(Element));
-	argo::backend::selective_release(S->array[index_b].elements_, sizeof(Element));
+	#if SELECTIVE_ACQREL
+		argo::backend::selective_release(S->array[index_a].elements_, sizeof(Element));
+		argo::backend::selective_release(S->array[index_b].elements_, sizeof(Element));
+	#endif
 
 	S->array[index_a].lock_->unlock();
 	S->array[index_b].lock_->unlock();
@@ -176,7 +190,7 @@ void verify() {
 
 	long ops = NUM_THREADS*numtasks;
 	ops *= NUM_OPS/(NUM_THREADS*numtasks);
-	
+
 	if (acc == 2*ops)
 		std::cout << "VERIFICATION: SUCCESS" << std::endl;
 	else
@@ -190,7 +204,9 @@ int main(int argc, char** argv) {
 
 	workrank = argo::node_id();
 	numtasks = argo::number_of_nodes();
-
+	#if SELECTIVE_ACQREL
+		WEXEC(printf("Running selective coherence version \n"));
+	#endif
 	WEXEC(std::cout << "In main\n" << std::endl);
 	struct timeval tv_start;
 	struct timeval tv_end;

@@ -52,7 +52,9 @@ int main(int argc, char* argv[]) {
 
 	workrank = argo::node_id();
 	numtasks = argo::number_of_nodes();
-
+	#if SELECTIVE_ACQREL
+		WEXEC(printf("Running selective coherence version \n"));
+	#endif
 	WEXEC(printf("In main\n"));
 	struct timeval tv_start;
 	struct timeval tv_end;
@@ -67,8 +69,6 @@ int main(int argc, char* argv[]) {
 
 	pthread_t threads[NUM_THREADS];
 	int global_tid[NUM_THREADS];
-	//my_tatp_db->printdbTable(); //#changed
-	//my_tatp_db->printSF_table();
 	gettimeofday(&tv_start, NULL);
 
 	for(int i=0; i<NUM_THREADS; i++) {
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
 	WEXEC(fexec << "TATP" << ", " << std::to_string((tv_end.tv_usec - tv_start.tv_usec) + (tv_end.tv_sec - tv_start.tv_sec) * 1000000) << std::endl);
 	WEXEC(fexec.close());
 
-	WEXEC(my_tatp_db->write_to_file());
+	//WEXEC(my_tatp_db->write_to_file());
 	delete my_tatp_db;
 
 	WEXEC(std::cout<<"Done with threads"<<std::endl);

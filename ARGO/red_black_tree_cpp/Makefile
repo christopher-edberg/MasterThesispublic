@@ -1,8 +1,8 @@
 # Set your ArgoDSM installation directory
-export ARGO_INSTALL_DIRECTORY=${HOME}/argodsm/install
+export ARGO_INSTALL_DIRECTORY=/mnt/c/Users/21chr/Documents/Universitet/Exjobb/Argo/argodsm-nosync/install
 
 CXX      =mpic++
-CXXFLAGS =-O3 -lpthread -std=c++11
+CXXFLAGS =-O3 -lpthread -std=c++11 
 
 IDFLAGS +=-I${ARGO_INSTALL_DIRECTORY}/include/argo
 IDFLAGS +=-I${ARGO_INSTALL_DIRECTORY}/include/argo/synchronization

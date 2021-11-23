@@ -4,7 +4,7 @@ Aasheesh Kolli <akolli@umich.edu>
 
 ArgoDSM/PThreads version:
 Ioannis Anevlavis <ioannis.anevlavis@etascale.com>
-*/ 
+*/
 
 #include "rb.h"
 
@@ -61,9 +61,14 @@ int main(int argc, char** argv) {
 
 	workrank = argo::node_id();
 	numtasks = argo::number_of_nodes();
-
-	lock_1 = new argo::globallock::cohort_lock();
-
+	#if SELECTIVE_ACQREL
+		WEXEC(printf("Running selective coherence version \n"));
+	#endif
+	#if SELECTIVE_ACQREL
+		lock_1 = new argo::globallock::cohort_lock(true);
+	#else
+		lock_1 = new argo::globallock::cohort_lock();
+	#endif
 	WEXEC(std::cout << "In main\n" << std::endl);
 	struct timeval tv_start;
 	struct timeval tv_end;
