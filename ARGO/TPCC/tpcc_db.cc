@@ -61,10 +61,36 @@ void write_to_file(std::string string, char* output = NULL)
 		exit(1);
 	}
 }
+void TPCC_DB::verification(){
+	int num_stocks = NUM_ITEMS*NUM_WAREHOUSES;
+	int tot = 0;
+	for(int i = 0; i<num_stocks; i++){
+		tot += stock[i].s_order_cnt;
+	}
+	int expected = 10*NUM_ORDERS;
+	assert(tot==expected);
 
+	int num_new_order = 10*NUM_WAREHOUSES*900;
+	int total_new_order = 0;
+	for(int i = 0; i<num_new_order; i++){
+		total_new_order += new_order[i].no_w_id;
+	}
+	int expected_new_order = num_new_order+NUM_ORDERS;
+	assert(total_new_order == expected_new_order);
+
+	int num_update_order = 3000*10*NUM_WAREHOUSES;
+	int total_update_order = 0;
+	for(int i = 0; i<num_update_order; i++){
+		total_update_order += order[i].o_all_local;
+	}
+	int expected_update_order = NUM_ORDERS+num_update_order;
+	assert(total_update_order == expected_update_order);
+
+	std::cout<<"VERIFICATION SUCCESSFUL"<<std::endl;
+}
 //End of printing function
 #if TPCC_DEBUG == 3
-int in_critical_section = 0; //Used to only trigger prints in function calls after the first CS section and not during setup.
+	int in_critical_section = 0; //Used to only trigger prints in function calls after the first CS section and not during setup.
 #endif
 
 void distribute(int& beg,
@@ -421,7 +447,11 @@ void TPCC_DB::fill_new_order_entry_CS(int _no_w_id, int _no_d_id, int _no_o_id) 
 
 	new_order[indx].no_o_id = _no_o_id;
 	new_order[indx].no_d_id = _no_d_id;
-	new_order[indx].no_w_id = _no_w_id;
+	#if TPCC_DEBUG == 4
+		new_order[indx].no_w_id += 	1;
+	#else
+		new_order[indx].no_w_id = _no_w_id;
+	#endif
 
 	#if SELECTIVE_ACQREL == 1
 			argo::backend::selective_release(&new_order[indx], sizeof(new_order_entry));
@@ -458,8 +488,11 @@ void TPCC_DB::fill_new_order_entry_CS(int _no_w_id, int _no_d_id, int _no_o_id, 
 
 	new_order[indx].no_o_id = _no_o_id;
 	new_order[indx].no_d_id = _no_d_id;
-	new_order[indx].no_w_id = _no_w_id;
-
+	#if TPCC_DEBUG == 4
+		new_order[indx].no_w_id += 	1;
+	#else
+		new_order[indx].no_w_id = _no_w_id;
+	#endif
 	#if SELECTIVE_ACQREL == 1
 			argo::backend::selective_release(&new_order[indx], sizeof(new_order_entry));
 	#endif
@@ -558,7 +591,11 @@ void TPCC_DB::update_order_entry(int _w_id, short _d_id, int _o_id, int _c_id, i
 
 	order[indx].o_id = _o_id;
 	order[indx].o_carrier_id = 0;
-	order[indx].o_all_local = 1;
+	#if TPCC_DEBUG == 4
+		order[indx].o_all_local += 1;
+	#else
+		order[indx].o_all_local = 1;
+	#endif
 	order[indx].o_ol_cnt = _ol_cnt;
 	order[indx].o_c_id = _c_id;
 	fill_time(order[indx].o_entry_d);
@@ -588,7 +625,11 @@ void TPCC_DB::update_order_entry(int _w_id, short _d_id, int _o_id, int _c_id, i
 
 	order[indx].o_id = _o_id;
 	order[indx].o_carrier_id = 0;
-	order[indx].o_all_local = 1;
+	#if TPCC_DEBUG == 4
+		order[indx].o_all_local += 1;
+	#else
+		order[indx].o_all_local = 1;
+	#endif
 	order[indx].o_ol_cnt = _ol_cnt;
 	order[indx].o_c_id = _c_id;
 	fill_time(order[indx].o_entry_d);
@@ -653,7 +694,7 @@ void TPCC_DB::update_stock_entry(int threadId, int _w_id, int _i_id, int _d_id, 
 		if(in_critical_section == 1) {
 			//std::stringstream str2;
 			str <<"update_stock_entry_after: Thread id: "<<threadId<<", Node id: "<<workrank<<", index: "<<indx<<", variables: "<<
-			stock[indx].s_quantity<<", "<<stock[indx].s_ytd<<", "<<stock[indx].s_order_cnt<<", "<<amount<<std::endl;
+			stock[indx].s_quantity<<", "<<stock[indx].s_ytd<<", "<<stock[indx].s_order_cnt<<" , "<<amount<<std::endl;
 			write_to_file(str.str(),(char*)"update_stock_entry_change.txt");
 		}
 	#endif
@@ -681,8 +722,11 @@ void TPCC_DB::new_order_tx(int threadId, int w_id, int d_id, int c_id) {
 				write_to_file(str2.str());
 		}
 	#endif
-
-	int ol_cnt = get_random(threadId, 5, 15);
+	#if TPCC_DEBUG == 4
+		int ol_cnt = 10;
+	#else
+		int ol_cnt = get_random(threadId, 5, 15);
+	#endif
 	int item_ids[ol_cnt];
 	for(int i=0; i<ol_cnt; i++) {
 		int new_item_id;
@@ -757,8 +801,8 @@ void TPCC_DB::new_order_tx(int threadId, int w_id, int d_id, int c_id) {
 	district[d_indx].d_next_o_id++;
 
 	#if SELECTIVE_ACQREL == 1
-		argo::backend::selective_release(&warehouse[w_indx].w_tax, sizeof(float));
-		argo::backend::selective_release(&district[d_indx].d_tax, sizeof(float));
+		//argo::backend::selective_release(&warehouse[w_indx].w_tax, sizeof(float));
+		//argo::backend::selective_release(&district[d_indx].d_tax, sizeof(float));
 		argo::backend::selective_release(&district[d_indx].d_next_o_id, sizeof(int));
 	#endif
 
@@ -769,7 +813,7 @@ void TPCC_DB::new_order_tx(int threadId, int w_id, int d_id, int c_id) {
 		write_to_file(str6.str(),(char*)"fill_new_order_entry.txt");
 		fill_new_order_entry_CS(w_id, d_id, d_o_id, threadId); //#changed Overloaded to add threadId for verification.
 	#else
-	fill_new_order_entry_CS(w_id,d_id,d_o_id); //#todo Verify by printing line 383-385 to file to ensure it was updated.
+		fill_new_order_entry_CS(w_id,d_id,d_o_id); //#todo Verify by printing line 383-385 to file to ensure it was updated.
 	#endif
 
 	#if TPCC_DEBUG == 3

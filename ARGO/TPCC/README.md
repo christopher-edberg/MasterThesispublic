@@ -24,3 +24,9 @@
 	See files: fill_new_order_entry.txt,  fill_new_order_entry_change.txt,
 		   update_order_entry.txt, update_order_entry_change.txt,
 		   update_stock_entry.txt, update_stock_entry_change.txt
+
+## TPCC_DEBUG = 4
+
+	Automated debug mode, will calculate values of variables to see if they were updated appropriately.
+	
+	This mode specifically checks if coherence was upheld. 

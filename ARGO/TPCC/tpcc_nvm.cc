@@ -87,7 +87,9 @@ int main(int argc, char* argv[]) {
 				(tv_end.tv_sec - tv_start.tv_sec) * 1000000));
 	WEXEC(fexec << "TPCC" << ", " << std::to_string((tv_end.tv_usec - tv_start.tv_usec) + (tv_end.tv_sec - tv_start.tv_sec) * 1000000) << std::endl);
 	WEXEC(fexec.close());
-
+	#if TPCC_DEBUG == 4
+		WEXEC(tpcc_db->verification());
+	#endif
 	delete tpcc_db;
 
 	WEXEC(std::cout<<"Done with threads"<<std::endl);
