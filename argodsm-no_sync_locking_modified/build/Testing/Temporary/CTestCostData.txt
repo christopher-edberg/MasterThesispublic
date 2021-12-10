@@ -1,0 +1,21 @@
+trivialTests-singlenode 1 0.0277159
+trivialTests-mpi 1 0.39225
+allocatorsTests-singlenode 1 0.0329717
+allocatorsTests-mpi 1 0.69441
+prefetchTests-singlenode 1 0.0306382
+prefetchTests-mpi 1 0.923841
+apiTests-singlenode 1 0.0321982
+apiTests-mpi 1 0.485644
+ompTests-singlenode 1 0.088314
+ompTests-mpi 1 5.42523
+cppSTLTests-singlenode 1 0.02731
+cppSTLTests-mpi 1 0.94072
+barrierTests-singlenode 1 58.4947
+barrierTests-mpi 1 6.03085
+uninitializedTests-singlenode 1 0.855778
+uninitializedTests-mpi 1 1.66027
+lockTests-singlenode 1 4.56315
+lockTests-mpi 1 2.79144
+backendTests-singlenode 1 0.0460427
+backendTests-mpi 1 2.72496
+---

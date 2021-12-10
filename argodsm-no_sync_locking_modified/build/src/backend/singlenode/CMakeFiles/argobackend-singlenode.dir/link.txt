@@ -1,0 +1,1 @@
+/usr/bin/mpic++ -fPIC  -std=c++11 -pthread -DOMPI_SKIP_MPICXX=1 -O3  -shared -Wl,-soname,libargobackend-singlenode.so -o ../../../lib/libargobackend-singlenode.so CMakeFiles/argobackend-singlenode.dir/singlenode.cpp.o 

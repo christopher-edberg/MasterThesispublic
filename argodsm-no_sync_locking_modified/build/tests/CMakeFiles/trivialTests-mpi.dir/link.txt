@@ -1,0 +1,1 @@
+/usr/bin/mpic++   -std=c++11 -pthread -DOMPI_SKIP_MPICXX=1 -O3    -O3 -rdynamic CMakeFiles/trivialTests-mpi.dir/trivial.cpp.o  -o ../bin/mpi/trivialTests  -Wl,-rpath,/mnt/c/Users/21chr/Documents/Universitet/Exjobb/Argo/MasterThesis/argodsm-no_sync_locking_modified/build/lib ../lib/libargo.so ../lib/libargobackend-mpi.so ../lib/libgtest.a -lnuma -lrt 
