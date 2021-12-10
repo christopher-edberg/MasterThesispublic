@@ -154,7 +154,7 @@ void TATP_DB::initialize(unsigned num_subscribers, int n) {
 			lock_[i] = new argo::globallock::cohort_lock();
 		#endif
 	}
-
+	//delete[] lockptrs;
 	int beg, end;
 	distribute(beg, end, 4*num_subscribers, 0, 0);
 
@@ -185,6 +185,7 @@ TATP_DB::~TATP_DB(){
 		delete lock_[i];
 	}
 	delete[] lock_;
+	//delete[] lockptrs;
 	delete[] subscriber_rndm_seeds;
 	delete[] vlr_rndm_seeds;
 	delete[] rndm_seeds;

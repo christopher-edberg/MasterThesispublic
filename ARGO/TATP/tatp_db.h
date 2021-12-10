@@ -17,9 +17,9 @@ the database.
 
 #include "tableEntries.h"
 
-#define NUM_SUBSCRIBERS 1*2097152
+#define NUM_SUBSCRIBERS 4*2097152
 #define NUM_OPS_PER_CS 2
-#define NUM_OPS 1*2048000//10000 //For verification NUM_OPS has to be devisible by NUM_THREADS*numtasks.numtasks i.e. number of nodes.
+#define NUM_OPS 4*2048000//10000 //For verification NUM_OPS has to be devisible by NUM_THREADS*numtasks.numtasks i.e. number of nodes.
 #define NUM_THREADS 8
 
 #define NUM_RNDM_SEEDS 1280
