@@ -3,10 +3,11 @@
 #############################
 # Job comment
 #############################
-#SBATCH -N 4
-#SBATCH -J TATP
-#SBATCH -o log.out
+#SBATCH -N 2
+#SBATCH -J TAppr1
+#SBATCH -o logN2p1_8th.out
 #SBATCH -p cluster
+#SBATCH -t 04:00:00
 #############################
 # OpenMPI Infiniband flags
 #############################

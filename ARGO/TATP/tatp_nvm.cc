@@ -48,7 +48,7 @@ void* update_locations(void* args) {
 }
 
 int main(int argc, char* argv[]) {
-	argo::init(500*1024*1024UL);
+	argo::init(4*1024*1024*1024UL,4*1024*1024*1024UL); //argo::init(500*1024*1024UL);
 
 	workrank = argo::node_id();
 	numtasks = argo::number_of_nodes();

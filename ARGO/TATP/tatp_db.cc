@@ -136,11 +136,19 @@ void TATP_DB::initialize(unsigned num_subscribers, int n) {
 
 	// A max of 3 call forwarding entries per "special facility entry"
 	call_forwarding_table= argo::conew_array<call_forwarding_entry>(3*4*num_subscribers);
-
+	
+	#if Modified_Argo
+		//argo::globallock::global_tas_lock is equivelant to global_lock_type at line 47 in synchronization/cohort_lock.hpp
+		argo::globallock::global_tas_lock::internal_field_type* lockptrs = argo::conew_array<argo::globallock::global_tas_lock::internal_field_type>(num_subscribers);
+	#endif
 	lock_ = new argo::globallock::cohort_lock*[num_subscribers]; //#todo lock created, change to non sync?
 	for(int i=0; i<num_subscribers; i++) {
 		#if SELECTIVE_ACQREL
-			lock_[i] = new argo::globallock::cohort_lock(true); //#changed Changing to non sync locking.
+			#if Modified_Argo == 0
+				lock_[i] = new argo::globallock::cohort_lock(true); //#changed Changing to non sync locking.
+			#else
+				lock_[i] = new argo::globallock::cohort_lock(&lockptrs[i],true); //#changed Changing to non sync locking.
+			#endif
 		#else
 			lock_[i] = new argo::globallock::cohort_lock();
 		#endif
