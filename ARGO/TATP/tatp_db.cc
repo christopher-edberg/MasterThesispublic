@@ -127,6 +127,10 @@ void TATP_DB::initialize(unsigned num_subscribers, int n) {
 	total_subscribers = num_subscribers;
 	num_threads = n;
 	subscriber_table = argo::conew_array<subscriber_entry>(num_subscribers);
+	int beg2, end2;
+	distribute(beg2, end2, num_subscribers, 0, 0);
+	for (int i = beg2; i < end2; ++i)
+		subscriber_table[i].vlr_location = 0;
 
 	// A max of 4 access info entries per subscriber
 	access_info_table = argo::conew_array<access_info_entry>(4*num_subscribers);
@@ -151,7 +155,11 @@ void TATP_DB::initialize(unsigned num_subscribers, int n) {
 				lock_[i] = new argo::globallock::cohort_lock(&lockptrs[i],true); //#changed Changing to non sync locking.
 			#endif
 		#else
-			lock_[i] = new argo::globallock::cohort_lock();
+			#if !MOD_ARGO
+				lock_[i] = new argo::globallock::cohort_lock();
+			#else
+				lock_[i] = new argo::globallock::cohort_lock(&lockptrs[i]);
+			#endif
 		#endif
 	}
 	//delete[] lockptrs;
@@ -391,7 +399,7 @@ void TATP_DB::verify() {
 	if (acc == ops)
 		std::cout << "VERIFICATION: SUCCESS" << std::endl;
 	else
-		std::cout << "VERIFICATION: FAILURE" << std::endl;
+		std::cout << "VERIFICATION: FAILURE" <<" Acc: "<<acc<<", ops= "<<ops << std::endl;
 }
 //end of verification function
 
