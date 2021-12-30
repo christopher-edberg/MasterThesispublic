@@ -139,7 +139,8 @@ void TATP_DB::initialize(unsigned num_subscribers, int n) {
 
 	#if MOD_ARGO
 		//argo::globallock::global_tas_lock is equivelant to global_lock_type at line 47 in synchronization/cohort_lock.hpp
-		argo::globallock::global_tas_lock::internal_field_type* lockptrs = argo::conew_array<argo::globallock::global_tas_lock::internal_field_type>(num_subscribers);
+		//argo::globallock::global_tas_lock::internal_field_type* lockptrs = argo::conew_array<argo::globallock::global_tas_lock::internal_field_type>(num_subscribers);
+		lockptrs = argo::conew_array<argo::globallock::global_tas_lock::internal_field_type>(num_subscribers);
 	#endif
 	lock_ = new argo::globallock::cohort_lock*[num_subscribers]; //#todo lock created, change to non sync?
 
@@ -189,10 +190,10 @@ TATP_DB::~TATP_DB(){
 		delete lock_[i];
 	}
 	delete[] lock_;
-	//delete[] lockptrs;
 	delete[] subscriber_rndm_seeds;
 	delete[] vlr_rndm_seeds;
 	delete[] rndm_seeds;
+	argo::codelete_array(lockptrs);
 	argo::codelete_array(subscriber_table);
 	argo::codelete_array(access_info_table);
 	argo::codelete_array(special_facility_table);
@@ -386,9 +387,9 @@ void TATP_DB::update_location(int threadId, int num_ops) {
 //For verification purposes #Verification #changed
 void TATP_DB::verify() {
 	long acc = 0;
-	for (long i = 0; i < total_subscribers; ++i) 
+	for (long i = 0; i < total_subscribers; ++i)
 		acc += subscriber_table[i].vlr_location;
-	
+
 	long ops = NUM_THREADS*numtasks;
 	ops *= NUM_OPS/(NUM_THREADS*numtasks);
 

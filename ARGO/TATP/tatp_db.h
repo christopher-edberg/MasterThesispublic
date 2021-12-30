@@ -17,14 +17,14 @@ the database.
 
 #include "tableEntries.h"
 
-#define NUM_SUBSCRIBERS 262176//0.5*524288//0.5*2097152
+#define NUM_SUBSCRIBERS 262144//262176//0.5*524288//0.5*2097152
 #define NUM_OPS_PER_CS 2
-#define NUM_OPS 262176//0.5*524288//0.5*2048000//10000 //For verification NUM_OPS has to be devisible by NUM_THREADS*numtasks.numtasks i.e. number of nodes.
+#define NUM_OPS 262144//262176//0.5*524288//0.5*2048000//10000 //For verification NUM_OPS has to be devisible by NUM_THREADS*numtasks.numtasks i.e. number of nodes.
 #define NUM_THREADS 16
 
 #define NUM_RNDM_SEEDS 1280
 
-#define ENABLE_VERIFICATION 0 //Variable for verification purposes.
+#define ENABLE_VERIFICATION 1 //Variable for verification purposes.
 #define SELECTIVE_ACQREL 0 //0 for normal full coherence, 1 for selective coherence in critical sections.
 #define MOD_ARGO 1
 
@@ -37,6 +37,7 @@ class TATP_DB{
 		special_facility_entry* special_facility_table; // Pointer to the special facility table
 		call_forwarding_entry* call_forwarding_table; // Pointer to the call forwarding table
 		argo::globallock::cohort_lock** lock_; // Lock per subscriber to protect the update
+		argo::globallock::global_tas_lock::internal_field_type* lockptrs; //lockptr for more efficient initialization, only sued when MOD_ARGO is set to 1.
 		//std::atomic<long>** txCounts; // Array of tx counts, success and fails
 		unsigned long* subscriber_rndm_seeds;
 		unsigned long* vlr_rndm_seeds;
