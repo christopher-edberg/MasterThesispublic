@@ -127,13 +127,25 @@ void TPCC_DB::initialize(int _num_warehouses, int numThreads, int numLocks) {
 		perTxLocks[i].push(0);
 		perTxLocks[i].pop();
 	}
-
+	#if MOD_ARGO
+		//argo::globallock::global_tas_lock is equivelant to global_lock_type at line 47 in synchronization/cohort_lock.hpp
+		lockptrs = argo::conew_array<argo::globallock::global_tas_lock::internal_field_type>(numLocks);
+	#endif
 	locks = new argo::globallock::cohort_lock*[numLocks];
+
 	for(int i=0; i<numLocks; i++) {
 		#if SELECTIVE_ACQREL == 1
-			locks[i] = new argo::globallock::cohort_lock(true); //#changed Selective acq rel operations are needed.
+			#if !MOD_ARGO
+				locks[i] = new argo::globallock::cohort_lock(true); //#changed
+			#else
+				locks[i] = new argo::globallock::cohort_lock(&lockptrs[i],true); //#changed
+			#endif
 		#else
-		 	locks[i] = new argo::globallock::cohort_lock();
+			#if !MOD_ARGO
+		 		locks[i] = new argo::globallock::cohort_lock();
+			#else
+				locks[i] = new argo::globallock::cohort_lock(&lockptrs[i]);
+			#endif
 		#endif
 		//locks[i] = new argo::globallock::cohort_lock();
 	}
@@ -184,6 +196,7 @@ TPCC_DB::~TPCC_DB(){
 	}
 	delete[] locks;
 	delete[] rndm_seeds;
+	argo::codelete_array(lockptrs);
 	argo::codelete_array(warehouse);
 	argo::codelete_array(district);
 	argo::codelete_array(customer);

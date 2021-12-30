@@ -1,0 +1,14 @@
+warehouse = 96 * NUM_WAREHOUSES
+district = 108 * 10 * NUM_WAREHOUSES
+customer = 672 * 3000 * 10* NUM_WAREHOUSES
+stock = 320 * NUM_ITEMS * NUM_WAREHOUSES
+
+item = 88 * NUM_ITEMS
+
+history = 64 * 3000 * 10* NUM_WAREHOUSES
+order = 40 * 3000 * 10* NUM_WAREHOUSES
+new_order = 16 * 900 * 10 * NUM_WAREHOUSES
+order_line = 64 * 15 * 3000 * 10 * NUM_WAREHOUSES
+
+
+96+(10*108)+(672*30000)+(320*X)+(88*X)+(64*30000)+(40*30000)+(16*9000)+(64*15*30000), where X=524288

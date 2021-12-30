@@ -3,10 +3,10 @@
 #############################
 # Job comment
 #############################
-#SBATCH -N 2
-#SBATCH -J TP_pr1
+#SBATCH -N 6
+#SBATCH -J TApr1
 #SBATCH -o logNCN6p1_StrongScalingSW.out
-#SBATCH -p cluster
+#SBATCH -t 04:00:00
 #############################
 # OpenMPI Infiniband flags
 #############################
@@ -15,4 +15,4 @@ OMPIFLAGS+="--mca mpi_leave_pinned 1 "
 OMPIFLAGS+="--mca btl_openib_allow_ib 1 "
 OMPIFLAGS+="--mca btl openib,self,vader "
 
-mpirun $OMPIFLAGS taskset -c 0-15 ./tpcc_nvm
+mpirun $OMPIFLAGS --bind-to socket ./tpcc_nvm

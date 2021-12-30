@@ -18,16 +18,17 @@ This file declares the tpcc database and the accesor transactions.
 #include "table_entries.h"
 #include "simple_queue.h"
 
-#define NUM_ORDERS 10000
+#define NUM_ORDERS 524288//2*10240
 #define NUM_THREADS 4
 
 #define NUM_WAREHOUSES 1
-#define NUM_ITEMS 100
+#define NUM_ITEMS 524288//4*100096
 #define NUM_LOCKS NUM_WAREHOUSES*10 + NUM_WAREHOUSES*NUM_ITEMS
 
-#define TPCC_DEBUG 4 // 0 Disable, 1 for Printing debug data to terminal, 2 for Printing debug data to file, 3 for Printing critical section verifcation data to files.
+#define TPCC_DEBUG 4 // 0 Disable, 1 for Printing debug data to terminal, 2 for Printing debug data to file, 3 for Printing critical section verifcation data to files, 4 for auto debugging.
 #define NUM_RNDM_SEEDS 1280
 #define SELECTIVE_ACQREL 1 //0 for normal full coherence, 1 for selective coherence in critical sections.
+#define MOD_ARGO 1
 
 // Macro for only node0 to do stuff
 #define WEXEC(inst) ({ if (workrank == 0) inst; })
@@ -59,6 +60,7 @@ class TPCC_DB {
 
 		queue_t* perTxLocks; // Array of queues of locks held by active Tx
 		argo::globallock::cohort_lock** locks; // Array of locks held by the TxEngn. RDSs acquire locks through the TxEngn
+		argo::globallock::global_tas_lock::internal_field_type* lockptrs; //lockptr for more efficient initialization, only sued when MOD_ARGO is set to 1.
 	public:
 		TPCC_DB();
 		~TPCC_DB();
