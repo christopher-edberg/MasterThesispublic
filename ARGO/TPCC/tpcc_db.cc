@@ -668,9 +668,11 @@ void TPCC_DB::update_stock_entry(int threadId, int _w_id, int _i_id, int _d_id, 
 	//int ol_quantity = get_random(threadId, 1, 10);
 	int ol_quantity = 7;
 	#if SELECTIVE_ACQREL == 1
-			argo::backend::selective_acquire(&stock[indx].s_quantity, sizeof(float));
+			/*argo::backend::selective_acquire(&stock[indx].s_quantity, sizeof(float));
 			argo::backend::selective_acquire(&stock[indx].s_ytd, sizeof(float));
 			argo::backend::selective_acquire(&stock[indx].s_order_cnt, sizeof(float));
+			argo::backend::selective_acquire(&item[_i_id-1].i_price, sizeof(float)); */
+			argo::backend::selective_acquire(&stock[indx],sizeof(stock_entry));
 			argo::backend::selective_acquire(&item[_i_id-1].i_price, sizeof(float));
 	#endif
 	#if TPCC_DEBUG == 3
@@ -697,10 +699,10 @@ void TPCC_DB::update_stock_entry(int threadId, int _w_id, int _i_id, int _d_id, 
 	amount += ol_quantity * item[_i_id-1].i_price;
 
 	#if SELECTIVE_ACQREL == 1
-			argo::backend::selective_release(&stock[indx].s_quantity, sizeof(float));
+			/*argo::backend::selective_release(&stock[indx].s_quantity, sizeof(float));
 			argo::backend::selective_release(&stock[indx].s_ytd, sizeof(float));
-			argo::backend::selective_release(&stock[indx].s_order_cnt, sizeof(float));
-			//argo::backend::selective_release(&item[_i_id-1].i_price, sizeof(float)); //#todo check if needed ?
+			argo::backend::selective_release(&stock[indx].s_order_cnt, sizeof(float));*/
+			argo::backend::selective_release(&stock[indx],sizeof(stock_entry));
 	#endif
 
 	#if TPCC_DEBUG == 3
@@ -798,8 +800,9 @@ void TPCC_DB::new_order_tx(int threadId, int w_id, int d_id, int c_id) {
 
 	#if SELECTIVE_ACQREL == 1
 		argo::backend::selective_acquire(&warehouse[w_indx].w_tax, sizeof(float));
-		argo::backend::selective_acquire(&district[d_indx].d_tax, sizeof(float));
-		argo::backend::selective_acquire(&district[d_indx].d_next_o_id, sizeof(int));
+		//argo::backend::selective_acquire(&district[d_indx].d_tax, sizeof(float));
+		//argo::backend::selective_acquire(&district[d_indx].d_next_o_id, sizeof(int));
+		argo::backend::selective_acquire(&district[d_indx],sizeof(district_entry));
 	#endif
 
 	float w_tax = warehouse[w_indx].w_tax;
