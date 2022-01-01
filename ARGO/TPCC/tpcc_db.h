@@ -25,7 +25,7 @@ This file declares the tpcc database and the accesor transactions.
 #define NUM_ITEMS 16384//0.25*524288//4*100096
 #define NUM_LOCKS NUM_WAREHOUSES*10 + NUM_WAREHOUSES*NUM_ITEMS
 
-#define TPCC_DEBUG 0 // 0 Disable, 1 for Printing debug data to terminal, 2 for Printing debug data to file, 3 for Printing critical section verifcation data to files, 4 for auto debugging.
+#define TPCC_DEBUG 1 
 #define NUM_RNDM_SEEDS 1280
 #define SELECTIVE_ACQREL 1 //0 for normal full coherence, 1 for selective coherence in critical sections.
 #define MOD_ARGO 1
