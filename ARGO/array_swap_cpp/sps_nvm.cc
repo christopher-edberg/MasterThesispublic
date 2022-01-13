@@ -27,8 +27,9 @@ This microbenchmark swaps two items in an array.
 #define NUM_THREADS 4
 
 #define ENABLE_VERIFICATION 1	//Enable/Disable verification functions.
-#define SELECTIVE_ACQREL 0
-
+#define SELECTIVE_ACQREL 1
+#define MOD_ARGO 1 //Modified ARGO version for mass allocation of locks flags.
+#define EFFICIENT_INITIALIZATION 1 //More efficient allocation of the elements by using conew_array over invidividual allocations.
 int workrank;
 int numtasks;
 
@@ -73,14 +74,38 @@ struct sps {
 };
 
 sps* S;
-int testing=0;
+#if MOD_ARGO
+	argo::globallock::global_tas_lock::internal_field_type* lockptrs; //lockptr for more efficient initialization, only sued when MOD_ARGO is set to 1.
+#endif
+#if EFFICIENT_INITIALIZATION
+	Element* RowElements;//More efficient allocation of the elements by using conew_array over invidividual allocations.
+#endif
 void datum_init(sps* s) {
+	#if MOD_ARGO
+		//argo::globallock::global_tas_lock is equivelant to global_lock_type at line 47 in synchronization/cohort_lock.hpp
+		lockptrs = argo::conew_array<argo::globallock::global_tas_lock::internal_field_type>(NUM_ROWS);
+	#endif
+	#if EFFICIENT_INITIALIZATION
+		RowElements = argo::conew_array<Element>(NUM_ROWS);
+	#endif
 	for(int i = 0; i < NUM_ROWS; i++) {
-		s->array[i].elements_ = argo::conew_<Element>();
-		#if SELECTIVE_ACQREL
-			s->array[i].lock_ = new argo::globallock::cohort_lock(true);
+		#if EFFICIENT_INITIALIZATION
+			s->array[i].elements_ = &RowElements[i]; //More efficient allocation of the elements by using conew_array over invidividual allocations.
 		#else
-			s->array[i].lock_ = new argo::globallock::cohort_lock();
+			s->array[i].elements_ = argo::conew_<Element>();
+		#endif
+		#if SELECTIVE_ACQREL
+			#if !MOD_ARGO
+				s->array[i].lock_ = new argo::globallock::cohort_lock(true);
+			#else
+				s->array[i].lock_ = new argo::globallock::cohort_lock(&lockptrs[i],true);
+			#endif
+		#else
+			#if !MOD_ARGO
+				s->array[i].lock_ = new argo::globallock::cohort_lock();
+			#else
+				s->array[i].lock_ = new argo::globallock::cohort_lock(&lockptrs[i]);
+			#endif
 		#endif
 	}
 	WEXEC(std::cout << "Finished allocating elems & locks" << std::endl);
@@ -104,6 +129,12 @@ void datum_free(sps* s) {
 		delete s->array[i].lock_;
 		argo::codelete_(s->array[i].elements_);
 	}
+	#if MOD_ARGO
+		argo::codelete_array(lockptrs);
+	#endif
+	#if EFFICIENT_INITIALIZATION
+		argo::codelete_array(RowElements);
+	#endif
 }
 
 void initialize() {
@@ -183,6 +214,7 @@ void* run_stub(void* ptr) {
 
 
 //For verification purposes #Verification #changed
+#if ENABLE_VERIFICATION
 void verify() {
 	long acc = 0;
 	for (long i = 0; i < NUM_ROWS; ++i)
@@ -196,6 +228,7 @@ void verify() {
 	else
 		std::cout << "VERIFICATION: FAILURE" << std::endl;
 }
+#endif
 //end of verification function
 
 

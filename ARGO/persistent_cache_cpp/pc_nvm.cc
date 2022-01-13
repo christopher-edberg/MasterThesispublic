@@ -21,12 +21,14 @@ This file uses the PersistentCache to enable multi-threaded updates to it.
 #include <iostream>
 
 #define NUM_ELEMS_PER_DATUM 2
-#define NUM_ROWS 1000
+#define NUM_ROWS 1000000
 #define NUM_UPDATES 1000
 #define NUM_THREADS 4
 
+#define MOD_ARGO 1 //Modified ARGO version for mass allocation of locks flags.
+#define EFFICIENT_INITIALIZATION 1 //More efficient allocation of the elements by using conew_array over invidividual allocations.
 #define SELECTIVE_ACQREL 1
-#define DEBUG 1
+#define DEBUG 0
 
 int workrank;
 int numtasks;
@@ -66,6 +68,12 @@ struct pc {
 
 uint32_t pc_rgn_id;
 pc* P;
+#if MOD_ARGO
+	argo::globallock::global_tas_lock::internal_field_type* lockptrs; //lockptr for more efficient initialization, only sued when MOD_ARGO is set to 1.
+#endif
+#if EFFICIENT_INITIALIZATION
+	Element* RowElements;
+#endif
 //Verification function
 void check() {
 		int checksum = 0;
@@ -83,12 +91,32 @@ void check() {
 //End of verification function
 
 void datum_init(pc* p) {
+	#if MOD_ARGO
+		//argo::globallock::global_tas_lock is equivelant to global_lock_type at line 47 in synchronization/cohort_lock.hpp
+		lockptrs = argo::conew_array<argo::globallock::global_tas_lock::internal_field_type>(NUM_ROWS);
+	#endif
+	#if EFFICIENT_INITIALIZATION
+		RowElements = argo::conew_array<Element>(NUM_ROWS);
+	#endif
 	for(int i = 0; i < NUM_ROWS; i++) {
-		p->hashmap[i].elements_ = argo::conew_<Element>();
-		#if SELECTIVE_ACQREL
-			p->hashmap[i].lock_ = new argo::globallock::cohort_lock(true);
+		#if EFFICIENT_INITIALIZATION
+			p->hashmap[i].elements_ = &RowElements[i]; //More efficient allocation of the elements by using conew_array over invidividual allocations.
 		#else
-			p->hashmap[i].lock_ = new argo::globallock::cohort_lock();
+			p->hashmap[i].elements_ = argo::conew_<Element>();
+		#endif
+
+		#if SELECTIVE_ACQREL
+			#if !MOD_ARGO
+				p->hashmap[i].lock_ = new argo::globallock::cohort_lock(true);
+			#else
+				p->hashmap[i].lock_ = new argo::globallock::cohort_lock(&lockptrs[i],true);
+			#endif
+		#else
+			#if !MOD_ARGO
+				p->hashmap[i].lock_ = new argo::globallock::cohort_lock();
+			#else
+				p->hashmap[i].lock_ = new argo::globallock::cohort_lock(&lockptrs[i]);
+			#endif
 		#endif
 	}
 	WEXEC(std::cout << "Finished allocating elems & locks" << std::endl);
@@ -112,10 +140,16 @@ void datum_free(pc* p) {
 		delete p->hashmap[i].lock_;
 		argo::codelete_(p->hashmap[i].elements_);
 	}
+	#if MOD_ARGO
+		argo::codelete_array(lockptrs);
+	#endif
+	#if EFFICIENT_INITIALIZATION
+		argo::codelete_array(RowElements);
+	#endif
 }
 
 void datum_set(int key, int value) {
-	P->hashmap[key].lock_->lock(); //todo change to selective
+	P->hashmap[key].lock_->lock();
 	#if SELECTIVE_ACQREL
 		argo::backend::selective_acquire(P->hashmap[key].elements_, sizeof(Element));
 	#endif
