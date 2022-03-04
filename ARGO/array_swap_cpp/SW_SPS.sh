@@ -4,15 +4,15 @@
 # Job comment
 #############################
 #SBATCH -N 4
-#SBATCH -J SPS_pr1
-#SBATCH -o logSCN4p1_Strong.out
+#SBATCH -J SPSpr2
+#SBATCH -o logSCN4p2_Strong.out
 #SBATCH -t 04:00:00
 #############################
 # OpenMPI Infiniband flags
 #############################
-OMPIFLAGS="--map-by ppr:1:node "
+OMPIFLAGS="--map-by ppr:2:node "
 OMPIFLAGS+="--mca mpi_leave_pinned 1 "
 OMPIFLAGS+="--mca btl_openib_allow_ib 1 "
 OMPIFLAGS+="--mca btl openib,self,vader "
 
-mpirun $OMPIFLAGS taskset -c 0-15 ./sps_nvm
+mpirun $OMPIFLAGS --bind-to socket ./sps_nvm
