@@ -21,8 +21,8 @@ This file uses the PersistentCache to enable multi-threaded updates to it.
 #include <iostream>
 
 #define NUM_ELEMS_PER_DATUM 2
-#define NUM_ROWS 1000000
-#define NUM_UPDATES 1000
+#define NUM_ROWS 1048576//2^20//1000000//1000000
+#define NUM_UPDATES 131072//1000//1000
 #define NUM_THREADS 4
 
 #define MOD_ARGO 1 //Modified ARGO version for mass allocation of locks flags.
