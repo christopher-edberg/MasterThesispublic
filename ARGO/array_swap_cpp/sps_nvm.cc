@@ -23,17 +23,17 @@ This microbenchmark swaps two items in an array.
 //524352//524288//131072//10000
 //1048608//1048576//1000000
 #define NUM_SUB_ITEMS 64
-//#define NUM_OPS 131072 //1 node
+#define NUM_OPS 131072 //1 node
 //#define NUM_OPS 262144 //2 nodes
-#define NUM_OPS 524288 //4 Nodes
+//#define NUM_OPS 524288 //4 Nodes
 
-//#define NUM_ROWS 262144 // 1 node
+#define NUM_ROWS 262144 // 1 node
 //#define NUM_ROWS 524288 //2 Node
-#define NUM_ROWS 1048576 //4 nodes
+//#define NUM_ROWS 1048576 //4 nodes
 #define NUM_THREADS 8
 
 #define ENABLE_VERIFICATION 0	//Enable/Disable verification functions.
-#define SELECTIVE_ACQREL 1
+#define SELECTIVE_ACQREL 0
 #define MOD_ARGO 1 //Modified ARGO version for mass allocation of locks flags.
 #define EFFICIENT_INITIALIZATION 1 //More efficient allocation of the elements by using conew_array over individual allocations.
 int workrank;
@@ -114,10 +114,11 @@ void datum_init(sps* s) {
 			#endif
 		#endif
 	}
-	WEXEC(std::cout << "Finished allocating elems & locks" << std::endl);
 	#if EFFICIENT_INITIALIZATION
 		argo::barrier();
 	#endif
+	WEXEC(std::cout << "Finished allocating elems & locks" << std::endl);
+
 	int beg, end;
 	distribute(beg, end, NUM_ROWS, 0, 0);
 

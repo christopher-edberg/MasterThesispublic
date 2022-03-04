@@ -3,9 +3,9 @@
 #############################
 # Job comment
 #############################
-#SBATCH -N 4
+#SBATCH -N 1
 #SBATCH -J SPS_pr1
-#SBATCH -o logSCN4p1_Strong.out
+#SBATCH -o logNCN1p1_8TH_WEAK.out
 #SBATCH -t 04:00:00
 #############################
 # OpenMPI Infiniband flags

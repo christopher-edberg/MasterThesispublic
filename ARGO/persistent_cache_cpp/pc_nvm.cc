@@ -119,6 +119,9 @@ void datum_init(pc* p) {
 			#endif
 		#endif
 	}
+	#if EFFICIENT_INITIALIZATION
+		argo::barrier();
+	#endif
 	WEXEC(std::cout << "Finished allocating elems & locks" << std::endl);
 
 	int beg, end;
