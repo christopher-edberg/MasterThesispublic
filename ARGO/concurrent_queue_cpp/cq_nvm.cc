@@ -45,7 +45,7 @@ void* run_stub(void* ptr) {
 }
 
 int main(int argc, char** argv) {
-	argo::init(256*1024*1024UL);
+	argo::init(128*1024*1024UL,128*1024*1024UL);//prev 256
 
 	workrank = argo::node_id();
 	numtasks = argo::number_of_nodes();
@@ -85,8 +85,15 @@ int main(int argc, char** argv) {
 	//std::stringstream ss;
 	//ss << workrank <<"out.txt";
 	//CQ->printCQtofile((char*)ss.str().c_str());
+	struct timeval tv_start2;
+	struct timeval tv_end2;
+	gettimeofday(&tv_start2, NULL);
 	delete CQ;
-
+	argo::barrier();
+	gettimeofday(&tv_end2, NULL);
+	WEXEC(fprintf(stderr, "Deconstructor time elapsed %ld us\n",
+				tv_end2.tv_usec - tv_start2.tv_usec +
+				(tv_end2.tv_sec - tv_start2.tv_sec) * 1000000));
 	argo::finalize();
 
 	return 0;

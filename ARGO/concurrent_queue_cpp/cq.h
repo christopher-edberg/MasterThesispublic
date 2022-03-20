@@ -16,11 +16,11 @@ Ioannis Anevlavis <ioannis.anevlavis@etascale.com>
 #include <vector>
 
 #define NUM_SUB_ITEMS 64
-#define NUM_OPS 9984 // has to be evenly divisible by number of nodes* threads.
-#define NUM_THREADS 8
+#define NUM_OPS 131072//65536//524288//262144//131072//9984 // has to be evenly divisible by number of nodes* threads.
+#define NUM_THREADS 4
 
 #define SELECTIVE_ACQREL 1 //0 for normal full coherence, 1 for selective coherence in critical sections.
-#define DEBUG 1
+#define DEBUG 0
 
 typedef struct item item;
 

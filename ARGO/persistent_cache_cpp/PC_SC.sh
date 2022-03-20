@@ -4,9 +4,9 @@
 # Job comment
 #############################
 #SBATCH -N 4
-#SBATCH -J PC
-#SBATCH -o logNCN4p1_16TH_WEAK.out
-#SBATCH -t 05:00:00
+#SBATCH -J PC_pr1
+#SBATCH -o logSCN4p1_4TH_WEAK.out
+#SBATCH -t 04:00:00
 #############################
 # OpenMPI Infiniband flags
 #############################

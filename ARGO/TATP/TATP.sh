@@ -3,7 +3,7 @@
 #############################
 # Job comment
 #############################
-#SBATCH -N 6
+#SBATCH -N 4
 #SBATCH -J TApr1
 #SBATCH -o logNCN6p1_StrongScaling.out
 #SBATCH -t 04:00:00

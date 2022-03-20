@@ -25,7 +25,7 @@ the database.
 #define NUM_RNDM_SEEDS 1280
 
 #define ENABLE_VERIFICATION 1 //Variable for verification purposes.
-#define SELECTIVE_ACQREL 0 //0 for normal full coherence, 1 for selective coherence in critical sections.
+#define SELECTIVE_ACQREL 1 //0 for normal full coherence, 1 for selective coherence in critical sections.
 #define MOD_ARGO 1
 
 class TATP_DB{

@@ -3,10 +3,10 @@
 #############################
 # Job comment
 #############################
-#SBATCH -N 2
-#SBATCH -J concurrent_queue_cpp
-#SBATCH -o log.out
-#SBATCH -p cluster
+#SBATCH -N 4
+#SBATCH -J CQ_pr1
+#SBATCH -o logNCN4p1_16TH_WEAK.out
+#SBATCH -t 05:00:00
 #############################
 # OpenMPI Infiniband flags
 #############################

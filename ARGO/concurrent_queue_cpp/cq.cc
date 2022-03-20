@@ -200,6 +200,7 @@ concurrent_queue::concurrent_queue() {
 
 concurrent_queue::~concurrent_queue() {
 	int temp;
+	/*
 	#if DEBUG
 		int* a = argo::conew_<int>(0);
 		while(pop(temp)) {
@@ -222,9 +223,9 @@ concurrent_queue::~concurrent_queue() {
 
 		assert((*a)*num_sub_items == expectsum);
 		std::cout<<"Deconstructor verification successful at node: "<<argo::node_id() <<std::endl;
-	#else
-		while(pop(temp));
-	#endif
+	#else */
+ 		while(pop(temp));
+	//#endif
 
 	delete enq_lock;
 	delete deq_lock;

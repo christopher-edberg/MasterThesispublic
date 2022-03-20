@@ -21,8 +21,17 @@ This file uses the PersistentCache to enable multi-threaded updates to it.
 #include <iostream>
 
 #define NUM_ELEMS_PER_DATUM 2
-#define NUM_ROWS 1048576//2^20//1000000//1000000
-#define NUM_UPDATES 131072//1000//1000
+//#define NUM_ROWS 1048608// 6 nodes
+//#define NUM_ROWS 262144 // 1 node
+//#define NUM_ROWS 524288 //2 Node
+#define NUM_ROWS 1048576 //4 nodes
+
+
+
+//#define NUM_UPDATES 524352 // 6 nodes
+//#define NUM_UPDATES 131072 //1 node
+//#define NUM_UPDATES 262144 //2 nodes
+#define NUM_UPDATES 524288 //4 Nodes
 #define NUM_THREADS 4
 
 #define MOD_ARGO 1 //Modified ARGO version for mass allocation of locks flags.
@@ -191,7 +200,7 @@ void* CacheUpdates(void* arguments) {
 }
 
 int main (int argc, char* argv[]) {
-	argo::init(500*1024*1024UL);
+	argo::init(500*1024*1024UL,500*1024*1024UL);
 
 	workrank = argo::node_id();
 	numtasks = argo::number_of_nodes();

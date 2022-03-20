@@ -4,9 +4,9 @@
 # Job comment
 #############################
 #SBATCH -N 4
-#SBATCH -J PC
-#SBATCH -o logNCN4p1_16TH_WEAK.out
-#SBATCH -t 05:00:00
+#SBATCH -J CQ_pr1
+#SBATCH -o logSCN4p1__4TH_WEAK.out
+#SBATCH -t 04:00:00
 #############################
 # OpenMPI Infiniband flags
 #############################
@@ -15,4 +15,4 @@ OMPIFLAGS+="--mca mpi_leave_pinned 1 "
 OMPIFLAGS+="--mca btl_openib_allow_ib 1 "
 OMPIFLAGS+="--mca btl openib,self,vader "
 
-mpirun $OMPIFLAGS taskset -c 0-15 ./pc_nvm
+mpirun $OMPIFLAGS taskset -c 0-15 ./cq_nvm

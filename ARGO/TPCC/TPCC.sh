@@ -5,8 +5,8 @@
 #############################
 #SBATCH -N 2
 #SBATCH -J TP_pr1
-#SBATCH -o logNCN6p1_StrongScalingSW.out
-#SBATCH -p cluster
+#SBATCH -o logSCN1p1.out
+#SBATCH -t 04:00:00
 #############################
 # OpenMPI Infiniband flags
 #############################
