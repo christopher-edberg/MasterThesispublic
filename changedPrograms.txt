@@ -1,8 +1,4 @@
 Functioning local versions:
 TATP (requires testing on ARGO servers)
 array_swap_cpp (requires testing on ARGO servers)
-TPCC (requires testing on ARGO servers)
-concurrent_queue_cpp (requires testing on ARGO servers)
-persistent_cache_cpp (requires testing on ARGO servers)
-
 Tested on ARGO:

@@ -1,1 +1,0 @@
-The CQ file is from benchmarking concurrent_queue and the lines that say DECON, is the time the deconstructor takes to execute; this code had a shared deconstructor which is why it takes a considerable amount of time. The first time of this refers to inserts into the queue, this operation used a global lock for the entire list so only one thread could alter the list at a time.
