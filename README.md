@@ -22,7 +22,7 @@ TPCC                  - New Order trans. from TPCC
 
 ## Software Requirements
 
-**Modified version of ARGO** - Assumes you have already installed the ArgoDSM version in this repository. Main [argodsm](https://github.com/etascale/argodsm) repository.
+**Modified version of ARGO** - Assumes you have already installed the ArgoDSM version in this [repository](https://github.com/christopher-edberg/Argo-VGOGTE-Selective-Coherence). Main [argodsm](https://github.com/etascale/argodsm) repository.
 
 ## Building
 
