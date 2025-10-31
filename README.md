@@ -1,5 +1,6 @@
 # The VGOGTE Parallel Benchmarks in C++
 
+Cloned from https://github.com/ioanev/vgogte/tree/master/ARGO and modified to add selective coherence options, bulk lock allocation.
 There is no official repository available.
 
 ## Implementations
