@@ -22,7 +22,7 @@ TPCC                  - New Order trans. from TPCC
 
 ## Software Requirements
 
-**ARGO** - Assumes you have already installed [argodsm](https://github.com/etascale/argodsm).
+**Modified version of ARGO** - Assumes you have already installed the ArgoDSM version in this repository. Main [argodsm](https://github.com/etascale/argodsm) repository.
 
 ## Building
 
@@ -40,6 +40,8 @@ $ (mpirun $OMPIFLAGS) ./binary_name
 ```
 
 Each benchmark can also be configured with the number of threads (`NUM_THREADS`), number of operations per thread (`NUM_OPS`), etc.. The benchmarks also have specific parameters, such as number of sub operations per operation, number of sub elements per datum, etc.
+
+Some benchmarks also allow for the bulk allocation of lock flags through the parameter (`MOD_ARGO`).
 
 ## References
 
